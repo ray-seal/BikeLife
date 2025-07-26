@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-import AuthPage from './pages/AuthPage';
-import CallbackPage from './pages/CallbackPage';
+import { AuthPage } from './pages/AuthPage';
+import { CallbackPage } from './pages/CallbackPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 // Import ThemeSwitcher if used
 // import ThemeSwitcher from './path-to-ThemeSwitcher';
