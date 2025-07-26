@@ -1,1 +1,26 @@
+tsx
+import React from 'react';
 
+const HomePage = () => {
+return (
+<div className="homepage">
+<header className="hero">
+<h1>Bike-Life</h1>
+<p>Connect with friends and fellow bikers, share updates and find people to ride with.</p>
+</header>
+<section className="features">
+<h2>Discover new things</h2>
+<ul>
+<li>Share your thoughts and photos</li>
+<li>Follow your favourite topics and users</li>
+<li>Join discussions about your favourite bikes</li>
+<ul>
+</section>
+<section className="call-to-action">
+<button>Get Started</button>
+</section>
+</div>
+);
+};
+
+export default HomePage;
