@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-/* Make sure to uncomment the AuthPage and the CallbackPage when they're built */
+// Make sure to uncomment the AuthPage and the CallbackPage when they're built
 // import AuthPage from './pages/AuthPage';
 // import CallbackPage from './pages/CallbackPage';
 import { NotFoundPage } from './pages/NotFoundPage';
