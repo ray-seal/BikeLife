@@ -14,7 +14,7 @@ return (
 <li>Share your thoughts and photos</li>
 <li>Follow your favourite topics and users</li>
 <li>Join discussions about your favourite bikes</li>
-<ul>
+</ul>
 </section>
 <section className="call-to-action">
 <button>Get Started</button>
