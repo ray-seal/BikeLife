@@ -3,8 +3,7 @@ import { HomePage } from './pages/HomePage';
 import { AuthPage } from './pages/AuthPage';
 import { CallbackPage } from './pages/CallbackPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-// Import ThemeSwitcher if used
-// import ThemeSwitcher from './path-to-ThemeSwitcher';
+import { CreateProfilePage } from './pages/CreateProfilePage'; // import your new page
 
 function App() {
   return (
@@ -15,7 +14,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/callback" element={<CallbackPage />} />
-        
+        <Route path="/create-profile" element={<CreateProfilePage />} /> {/* your new route */}
         {/* Catch-all must go last */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
