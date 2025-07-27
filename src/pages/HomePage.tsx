@@ -40,9 +40,11 @@ export const HomePage: React.FC = () => {
       email,
       password,
     });
-    if (error) setError(error.message);
-    else {
-      // Redirect to create-profile after successful signup
+    if (error) {
+      setError(error.message);
+    } else {
+      setView("user");
+      // navigate to create-profile after sign up
       navigate("/create-profile");
     }
   };
