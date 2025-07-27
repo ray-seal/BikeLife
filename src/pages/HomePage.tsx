@@ -16,14 +16,12 @@ export const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for existing session
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUser(data.user);
         setView("user");
       }
     });
-    // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) setView("user");
@@ -40,13 +38,11 @@ export const HomePage: React.FC = () => {
       email,
       password,
     });
-    if (error) {
-      setError(error.message);
-    } else {
+    if (error) setError(error.message);
+    else {
       setUser(data?.user ?? null);
       setView("user");
-      // Redirect to CreateProfilePage after successful signup
-      navigate("/CreateProfilePage");
+      navigate("/create-profile"); // Correct path
     }
   };
 
@@ -72,6 +68,9 @@ export const HomePage: React.FC = () => {
     setPassword("");
   };
 
+  // Debug log for troubleshooting
+  // console.log("view:", view, "user:", user);
+
   return (
     <main className="p-4 max-w-md mx-auto">
       <h1 className="text-2xl mb-4">BikeLife</h1>
@@ -86,7 +85,7 @@ export const HomePage: React.FC = () => {
               Log Out
             </button>
             <Link
-              to="/CreateProfilePage"
+              to="/create-profile" // Correct path
               className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-4 rounded"
             >
               Create or Edit Profile
