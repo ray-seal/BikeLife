@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createClient, User } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 // Initialize Supabase client
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
@@ -72,12 +72,20 @@ export const HomePage: React.FC = () => {
       {view === "user" && user ? (
         <div>
           <p className="mb-2">Logged in as: <b>{user.email}</b></p>
-          <button
-            className="bg-red-500 hover:bg-red-700 text-white py-1 px-4 rounded"
-            onClick={handleLogOut}
-          >
-            Log Out
-          </button>
+          <div className="flex gap-2 mb-2">
+            <button
+              className="bg-red-500 hover:bg-red-700 text-white py-1 px-4 rounded"
+              onClick={handleLogOut}
+            >
+              Log Out
+            </button>
+            <Link
+              to="/create-profile"
+              className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-4 rounded"
+            >
+              Create or Edit Profile
+            </Link>
+          </div>
         </div>
       ) : (
         <div>
