@@ -34,7 +34,7 @@ export const HomePage: React.FC = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -45,7 +45,7 @@ export const HomePage: React.FC = () => {
   const handleLogIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
