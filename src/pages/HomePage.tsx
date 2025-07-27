@@ -36,28 +36,32 @@ export const HomePage: React.FC = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
     if (error) {
       setError(error.message);
     } else {
+      setUser(data?.user ?? null);
       setView("user");
-      // navigate to create-profile after sign up
-      navigate("/create-profile");
+      // Redirect to CreateProfilePage after successful signup
+      navigate("/CreateProfilePage");
     }
   };
 
   const handleLogIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) setError(error.message);
-    else setView("user");
+    else {
+      setUser(data?.user ?? null);
+      setView("user");
+    }
   };
 
   const handleLogOut = async () => {
@@ -82,7 +86,7 @@ export const HomePage: React.FC = () => {
               Log Out
             </button>
             <Link
-              to="/create-profile"
+              to="/CreateProfilePage"
               className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-4 rounded"
             >
               Create or Edit Profile
