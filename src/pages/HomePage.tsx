@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createClient, User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 
 // Initialize Supabase client
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
@@ -12,6 +13,7 @@ export const HomePage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check for existing session
@@ -39,7 +41,10 @@ export const HomePage: React.FC = () => {
       password,
     });
     if (error) setError(error.message);
-    else setView("login");
+    else {
+      // Redirect to create-profile after successful signup
+      navigate("/create-profile");
+    }
   };
 
   const handleLogIn = async (e: React.FormEvent) => {
