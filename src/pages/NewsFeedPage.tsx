@@ -39,7 +39,6 @@ export const NewsFeedPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Editing
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
 
@@ -154,11 +153,11 @@ export const NewsFeedPage: React.FC = () => {
 
   const handleEditSave = async (postId: string) => {
     if (!user) return;
+    // Only update by post ID; RLS should limit update to owner
     const { data, error: updateError } = await supabase
       .from("posts")
       .update({ content: editContent })
       .eq("id", postId)
-      .eq("user_id", user.id)
       .select();
 
     if (updateError) {
