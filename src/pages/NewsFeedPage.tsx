@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
 
-// TODO: Move these to a central config if needed
+// Supabase config
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -59,6 +59,9 @@ export const NewsFeedPage: React.FC = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
+      // The table names are: profile, posts, likes, comments
+      // posts.user_id should reference profile.user_id
+      // likes and comments have post_id
       const { data, error } = await supabase
         .from("posts")
         .select(`
@@ -70,7 +73,7 @@ export const NewsFeedPage: React.FC = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        setError("Failed to fetch posts");
+        setError("Failed to fetch posts: " + error.message);
         setLoading(false);
         return;
       }
@@ -162,11 +165,12 @@ export const NewsFeedPage: React.FC = () => {
       {user && (
         <form onSubmit={handleSubmit} className="mb-6">
           <textarea
-            className="w-full border rounded p-2 mb-2"
+            className="w-full border rounded p-2 mb-2 text-black"
             placeholder="What's on your mind?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={2}
+            style={{ color: "#000" }}
           />
           <input
             type="file"
