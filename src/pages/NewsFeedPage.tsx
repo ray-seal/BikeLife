@@ -310,3 +310,4 @@ export const NewsFeedPage: React.FC = () => {
 };
 
 export default NewsFeedPage;
+
