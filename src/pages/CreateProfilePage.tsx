@@ -37,8 +37,8 @@ export const CreateProfilePage: React.FC = () => {
       return;
     }
 
-    // Insert into "profiles" table (make sure your table is named "profiles" and columns match)
-    const { error: insertError } = await supabase.from("profiles").upsert(
+    // Insert into "profile" table (not "profiles")
+    const { error: insertError } = await supabase.from("profile").upsert(
       [
         {
           user_id: user.id, // assuming you have a user_id column as FK to auth.users
@@ -49,7 +49,7 @@ export const CreateProfilePage: React.FC = () => {
           location,
         },
       ],
-      { onConflict: "user_id" } // FIX: string not array
+      { onConflict: "user_id" }
     );
 
     if (insertError) {
