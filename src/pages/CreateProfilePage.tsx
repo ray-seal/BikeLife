@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
@@ -22,8 +21,6 @@ export const CreateProfilePage: React.FC = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const navigate = useNavigate();
 
   // Fetch profile on mount
   useEffect(() => {
@@ -135,7 +132,7 @@ export const CreateProfilePage: React.FC = () => {
     }
 
     // Upsert the profile
-    const { error: insertError, data: updatedProfile } = await supabase.from("profile").upsert(
+    const { error: insertError } = await supabase.from("profile").upsert(
       [
         {
           user_id: user.id,
@@ -147,7 +144,7 @@ export const CreateProfilePage: React.FC = () => {
           profile_pic_url: profilePicUrl,
         },
       ],
-      { onConflict: "user_id", returning: "representation" }
+      { onConflict: "user_id" }
     );
 
     if (insertError) {
