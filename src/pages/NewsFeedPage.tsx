@@ -15,6 +15,15 @@ type Profile = {
   profile_pic_url: string | null;
 };
 
+type Comment = {
+  id: string;
+  user_id: string;
+  post_id: string;
+  content: string;
+  created_at: string;
+  profile?: Profile;
+};
+
 type Post = {
   id: string;
   user_id: string;
@@ -24,6 +33,8 @@ type Post = {
   profile?: Profile;
   like_count?: number;
   comment_count?: number;
+  comments_list?: Comment[];
+  liked_by_user?: boolean;
 };
 
 export const NewsFeedPage: React.FC = () => {
@@ -39,8 +50,14 @@ export const NewsFeedPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  // Editing
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
+
+  // Comments
+  const [showComments, setShowComments] = useState<{[postId: string]: boolean}>({});
+  const [commentInputs, setCommentInputs] = useState<{[postId: string]: string}>({});
+  const [submittingComment, setSubmittingComment] = useState<{[postId: string]: boolean}>({});
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -59,15 +76,24 @@ export const NewsFeedPage: React.FC = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      setError(null);
+
+      // Fetch posts with profile, count of likes and comments, and if liked by current user
+      let query = supabase
         .from("posts")
         .select(`
           *,
           profile:profile(user_id,name,profile_pic_url),
           likes(count),
-          comments(count)
+          comments(count),
+          comments_list:comments(
+            id, user_id, post_id, content, created_at,
+            profile:profile(user_id,name,profile_pic_url)
+          )
         `)
         .order("created_at", { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         setError("Failed to fetch posts: " + error.message);
@@ -75,16 +101,27 @@ export const NewsFeedPage: React.FC = () => {
         return;
       }
 
+      // Fetch likes for current user to mark liked posts
+      let likedPosts: string[] = [];
+      if (user) {
+        const { data: userLikes } = await supabase
+          .from("likes")
+          .select("post_id")
+          .eq("user_id", user.id);
+        likedPosts = (userLikes || []).map((like) => like.post_id);
+      }
+
       const mapped = (data as any[]).map((p) => ({
         ...p,
         like_count: p.likes?.[0]?.count || 0,
         comment_count: p.comments?.[0]?.count || 0,
+        liked_by_user: user ? likedPosts.includes(p.id) : false,
       }));
       setPosts(mapped);
       setLoading(false);
     };
     fetchPosts();
-  }, [refresh]);
+  }, [refresh, user]);
 
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
@@ -131,12 +168,27 @@ export const NewsFeedPage: React.FC = () => {
     }
   };
 
-  const handleLike = async (postId: string) => {
+  // Like/unlike logic: toggle like for current user
+  const handleLike = async (post: Post) => {
     if (!user) return;
-    await supabase
-      .from("likes")
-      .upsert([{ post_id: postId, user_id: user.id }], { onConflict: "post_id,user_id" });
-    setRefresh((r) => r + 1);
+    try {
+      if (post.liked_by_user) {
+        // Remove like
+        await supabase
+          .from("likes")
+          .delete()
+          .eq("post_id", post.id)
+          .eq("user_id", user.id);
+      } else {
+        // Add like
+        await supabase
+          .from("likes")
+          .insert([{ post_id: post.id, user_id: user.id }]);
+      }
+      setRefresh((r) => r + 1);
+    } catch (e) {
+      setError("Failed to update like.");
+    }
   };
 
   // Edit post handlers
@@ -153,7 +205,6 @@ export const NewsFeedPage: React.FC = () => {
 
   const handleEditSave = async (postId: string) => {
     if (!user) return;
-    // Only update by post ID; RLS should limit update to owner
     const { data, error: updateError } = await supabase
       .from("posts")
       .update({ content: editContent })
@@ -169,6 +220,46 @@ export const NewsFeedPage: React.FC = () => {
       setEditContent("");
       setError(null);
       setRefresh((r) => r + 1);
+    }
+  };
+
+  // Comments handlers
+  const toggleShowComments = (postId: string) => {
+    setShowComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
+  const handleCommentInput = (postId: string, value: string) => {
+    setCommentInputs((prev) => ({
+      ...prev,
+      [postId]: value,
+    }));
+  };
+
+  const handleAddComment = async (e: React.FormEvent, postId: string) => {
+    e.preventDefault();
+    if (!user || !commentInputs[postId]?.trim()) return;
+
+    setSubmittingComment((prev) => ({ ...prev, [postId]: true }));
+    setError(null);
+
+    try {
+      const { error: insertError } = await supabase.from("comments").insert([
+        {
+          post_id: postId,
+          user_id: user.id,
+          content: commentInputs[postId].trim(),
+        },
+      ]);
+      if (insertError) throw insertError;
+      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+      setRefresh((r) => r + 1);
+    } catch (err: any) {
+      setError(err.message || "Failed to add comment.");
+    } finally {
+      setSubmittingComment((prev) => ({ ...prev, [postId]: false }));
     }
   };
 
@@ -294,18 +385,59 @@ export const NewsFeedPage: React.FC = () => {
               )}
               <div className="flex gap-4 text-sm">
                 <button
-                  className="flex items-center gap-1 text-blue-600"
-                  onClick={() => handleLike(post.id)}
+                  className={`flex items-center gap-1 ${post.liked_by_user ? "text-red-600" : "text-blue-600"}`}
+                  onClick={() => handleLike(post)}
                   disabled={!user}
-                  title={user ? "Like" : "Sign in to like"}
+                  title={user ? (post.liked_by_user ? "Unlike" : "Like") : "Sign in to like"}
                   type="button"
                 >
-                  👍 {post.like_count || 0}
+                  {post.liked_by_user ? "❤️" : "👍"} {post.like_count || 0}
                 </button>
-                <span className="flex items-center gap-1 text-gray-600">
+                <button
+                  className="flex items-center gap-1 text-gray-600"
+                  onClick={() => toggleShowComments(post.id)}
+                  type="button"
+                >
                   💬 {post.comment_count || 0}
-                </span>
+                </button>
               </div>
+              {showComments[post.id] && (
+                <div className="mt-2">
+                  {post.comments_list && post.comments_list.length > 0 ? (
+                    post.comments_list
+                      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                      .map((c) => (
+                        <div key={c.id} className="text-sm text-black border-t py-1 flex items-center">
+                          <span className="font-bold mr-2">{c.profile?.name || "User"}:</span>
+                          <span>{c.content}</span>
+                          <span className="ml-auto text-xs text-gray-400">{new Date(c.created_at).toLocaleString("en-GB")}</span>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-sm text-gray-500 border-t py-1">No comments yet.</div>
+                  )}
+                  {user && (
+                    <form
+                      className="flex items-center gap-2 mt-2"
+                      onSubmit={(e) => handleAddComment(e, post.id)}
+                    >
+                      <input
+                        className="border p-1 rounded flex-1 text-black"
+                        value={commentInputs[post.id] || ""}
+                        onChange={e => handleCommentInput(post.id, e.target.value)}
+                        placeholder="Add a comment..."
+                      />
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded"
+                        type="submit"
+                        disabled={submittingComment[post.id]}
+                      >
+                        {submittingComment[post.id] ? "..." : "Comment"}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
