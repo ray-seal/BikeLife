@@ -13,26 +13,29 @@ export const HomePage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // <-- Add loading state
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
-      console.log("Supabase getUser() on mount:", { data, error });
       if (data.user) {
         setUser(data.user);
         setView("user");
+        navigate("/news-feed"); // Redirect to news feed if already logged in
       }
-      setLoading(false); // <-- Set loading to false after check
+      setLoading(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Supabase onAuthStateChange event:", _event, session);
       setUser(session?.user ?? null);
-      if (session?.user) setView("user");
+      if (session?.user) {
+        setView("user");
+        navigate("/news-feed"); // Redirect to news feed after login/signup
+      }
     });
     return () => {
       listener?.subscription.unsubscribe();
     };
+    // eslint-disable-next-line
   }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -42,7 +45,6 @@ export const HomePage: React.FC = () => {
       email,
       password,
     });
-    console.log("handleSignUp result:", { data, error });
     if (error) setError(error.message);
     else {
       setUser(data.user ?? null);
@@ -58,11 +60,11 @@ export const HomePage: React.FC = () => {
       email,
       password,
     });
-    console.log("handleLogIn result:", { data, error });
     if (error) setError(error.message);
     else {
       setUser(data.user ?? null);
       setView("user");
+      navigate("/news-feed"); // Redirect to news feed after login
     }
   };
 
@@ -72,13 +74,8 @@ export const HomePage: React.FC = () => {
     setView("login");
     setEmail("");
     setPassword("");
-    console.log("User logged out");
   };
 
-  // Debug log for current state
-  console.log("Current state:", { view, user, loading });
-
-  // Show loading indicator while checking session
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -99,6 +96,12 @@ export const HomePage: React.FC = () => {
               className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-4 rounded"
             >
               Create or Edit Profile
+            </Link>
+            <Link
+              to="/news-feed"
+              className="bg-green-500 hover:bg-green-700 text-white py-1 px-4 rounded"
+            >
+              Go to News Feed
             </Link>
           </div>
         </div>
