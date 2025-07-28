@@ -39,7 +39,7 @@ export const NewsFeedPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // For editing posts
+  // Editing
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
 
@@ -149,20 +149,26 @@ export const NewsFeedPage: React.FC = () => {
   const handleEditCancel = () => {
     setEditingPostId(null);
     setEditContent("");
+    setError(null);
   };
 
   const handleEditSave = async (postId: string) => {
     if (!user) return;
-    const { error: updateError } = await supabase
+    const { data, error: updateError } = await supabase
       .from("posts")
       .update({ content: editContent })
       .eq("id", postId)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select();
+
     if (updateError) {
-      setError(updateError.message);
+      setError("Edit failed: " + updateError.message);
+    } else if (!data || data.length === 0) {
+      setError("Edit failed: No matching post found or you do not have permission.");
     } else {
       setEditingPostId(null);
       setEditContent("");
+      setError(null);
       setRefresh((r) => r + 1);
     }
   };
@@ -310,4 +316,3 @@ export const NewsFeedPage: React.FC = () => {
 };
 
 export default NewsFeedPage;
-
