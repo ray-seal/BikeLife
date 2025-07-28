@@ -63,7 +63,7 @@ export const NewsFeedPage: React.FC = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
-  // Fetch user on mount
+  // Fetch user on mount (only once!)
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null);
@@ -89,17 +89,13 @@ export const NewsFeedPage: React.FC = () => {
     fetchProfile();
   }, [user, navigate]);
 
-  // Fetch posts
+  // Fetch posts (use user, but don't update user here!)
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
       setError(null);
 
-      // Get current user for likes
-      const { data: authData } = await supabase.auth.getUser();
-      const currentUser = authData?.user ?? null;
-      setUser(currentUser);
-
+      // Use user from state, do not call setUser here
       // Fetch posts with profiles, likes, and comments
       let query = supabase
         .from("posts")
@@ -127,11 +123,11 @@ export const NewsFeedPage: React.FC = () => {
 
       // Fetch likes for current user to mark liked posts
       let likedPosts: string[] = [];
-      if (currentUser) {
+      if (user) {
         const { data: userLikes } = await supabase
           .from("likes")
           .select("post_id")
-          .eq("user_id", currentUser.id);
+          .eq("user_id", user.id);
         likedPosts = (userLikes || []).map((like) => like.post_id);
       }
 
@@ -139,7 +135,7 @@ export const NewsFeedPage: React.FC = () => {
         ...p,
         like_count: p.likes?.[0]?.count || 0,
         comment_count: p.comments?.[0]?.count || 0,
-        liked_by_user: currentUser ? likedPosts.includes(p.id) : false,
+        liked_by_user: user ? likedPosts.includes(p.id) : false,
       }));
       setPosts(mapped);
       setLoading(false);
