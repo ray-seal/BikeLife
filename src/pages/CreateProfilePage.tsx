@@ -49,7 +49,7 @@ export const CreateProfilePage: React.FC = () => {
           location,
         },
       ],
-      { onConflict: "user_id" } // FIX: string, not array
+      { onConflict: "user_id" } // FIX: string not array
     );
 
     if (insertError) {
