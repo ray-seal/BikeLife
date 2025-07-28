@@ -1,12 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createClient, User } from "@supabase/supabase-js";
+import { useNavigate, Link } from "react-router-dom";
 
-// TODO: Move these to a central config
+// TODO: Move these to a central config if needed
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const BUCKET = "news-feed-photos";
+
+type Profile = {
+  user_id: string;
+  name: string;
+  profile_pic_url: string | null;
+};
 
 type Post = {
   id: string;
@@ -14,13 +21,14 @@ type Post = {
   content: string | null;
   image_url: string | null;
   created_at: string;
-  profile?: { name: string; profile_pic_url: string | null };
+  profile?: Profile;
   like_count?: number;
   comment_count?: number;
 };
 
 export const NewsFeedPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
@@ -29,10 +37,22 @@ export const NewsFeedPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
-  // Fetch logged-in user
+  // Fetch logged-in user & profile
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user ?? null);
+      if (data.user) {
+        // Fetch profile info for avatar
+        const { data: profileData } = await supabase
+          .from("profile")
+          .select("user_id,name,profile_pic_url")
+          .eq("user_id", data.user.id)
+          .single();
+        if (profileData) setProfile(profileData);
+      }
+    });
   }, []);
 
   // Fetch posts (with user profiles, like and comment counts)
@@ -58,8 +78,8 @@ export const NewsFeedPage: React.FC = () => {
       // Map like/comment counts
       const mapped = (data as any[]).map((p) => ({
         ...p,
-        like_count: p.likes[0]?.count || 0,
-        comment_count: p.comments[0]?.count || 0,
+        like_count: p.likes?.[0]?.count || 0,
+        comment_count: p.comments?.[0]?.count || 0,
       }));
       setPosts(mapped);
       setLoading(false);
@@ -71,7 +91,7 @@ export const NewsFeedPage: React.FC = () => {
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(BUCKET)
       .upload(fileName, file);
 
@@ -117,14 +137,26 @@ export const NewsFeedPage: React.FC = () => {
   // Like a post
   const handleLike = async (postId: string) => {
     if (!user) return;
-    await supabase.from("likes").insert([{ post_id: postId, user_id: user.id }], { upsert: true, onConflict: "post_id,user_id" });
+    await supabase
+      .from("likes")
+      .upsert([{ post_id: postId, user_id: user.id }], { onConflict: "post_id,user_id" });
     setRefresh((r) => r + 1);
   };
 
   // Render
   return (
-    <main className="max-w-md mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">News Feed</h1>
+    <main className="max-w-md mx-auto p-4 relative">
+      {/* User avatar top left */}
+      {profile && profile.profile_pic_url && (
+        <img
+          src={profile.profile_pic_url}
+          className="w-10 h-10 rounded-full cursor-pointer absolute top-4 left-4 border-2 border-blue-500"
+          alt="My profile"
+          title="View my profile"
+          onClick={() => navigate("/create-profile")}
+        />
+      )}
+      <h1 className="text-2xl font-bold mb-4 text-center">News Feed</h1>
 
       {/* Create post */}
       {user && (
@@ -170,13 +202,20 @@ export const NewsFeedPage: React.FC = () => {
                 {post.profile?.profile_pic_url ? (
                   <img
                     src={post.profile.profile_pic_url}
-                    className="w-8 h-8 rounded-full mr-2"
+                    className="w-8 h-8 rounded-full mr-2 cursor-pointer"
                     alt={post.profile.name || "user"}
+                    title="View user's profile"
+                    onClick={() => navigate(`/profile/${post.user_id}`)}
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-300 mr-2" />
                 )}
-                <span className="font-bold">{post.profile?.name || "User"}</span>
+                <Link
+                  to={`/profile/${post.user_id}`}
+                  className="font-bold hover:underline"
+                >
+                  {post.profile?.name || "User"}
+                </Link>
                 <span className="ml-auto text-xs text-gray-500">
                   {new Date(post.created_at).toLocaleString()}
                 </span>
