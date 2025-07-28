@@ -13,17 +13,17 @@ export const HomePage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true); // <-- Add loading state
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for existing session
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUser(data.user);
         setView("user");
       }
+      setLoading(false); // <-- Set loading to false after check
     });
-    // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) setView("user");
@@ -73,6 +73,9 @@ export const HomePage: React.FC = () => {
   // Debug log for troubleshooting
   console.log("view:", view, "user:", user);
 
+  // Show loading indicator while checking session
+  if (loading) return <div>Loading...</div>;
+
   return (
     <main className="p-4 max-w-md mx-auto">
       <h1 className="text-2xl mb-4">BikeLife</h1>
@@ -119,6 +122,7 @@ export const HomePage: React.FC = () => {
               placeholder="Email"
               value={email}
               required
+              autoComplete="email"
               className="border p-2 rounded"
               onChange={e => setEmail(e.target.value)}
             />
@@ -127,6 +131,7 @@ export const HomePage: React.FC = () => {
               placeholder="Password"
               value={password}
               required
+              autoComplete="current-password"
               className="border p-2 rounded"
               onChange={e => setPassword(e.target.value)}
             />
