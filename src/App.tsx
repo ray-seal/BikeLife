@@ -3,7 +3,8 @@ import { HomePage } from './pages/HomePage';
 import { AuthPage } from './pages/AuthPage';
 import { CallbackPage } from './pages/CallbackPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { CreateProfilePage } from './pages/CreateProfilePage'; // import your new page
+import { CreateProfilePage } from './pages/CreateProfilePage';
+import { NewsFeedPage } from './pages/NewsFeedPage'; // <-- Add this import
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/callback" element={<CallbackPage />} />
         <Route path="/create-profile" element={<CreateProfilePage />} />
+        <Route path="/news-feed" element={<NewsFeedPage />} /> {/* <-- Add this route */}
         <Route
           path="/test"
           element={<div style={{ padding: 32, fontSize: 24 }}>Test Route Works</div>}
