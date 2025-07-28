@@ -75,13 +75,19 @@ export const NewsFeedPage: React.FC = () => {
     if (!user) return;
     if (window.location.pathname === "/create-profile") return;
     const fetchProfile = async () => {
-      const { data, error } = await supabase
+      const { data, error, status } = await supabase
         .from("profile")
         .select("*")
         .eq("user_id", user.id)
         .single();
-      if (!data || error) {
+      // Redirect if "no rows" or status 406 (no profile)
+      if (
+        (!data && error && error.message && error.message.toLowerCase().includes("no rows")) ||
+        status === 406
+      ) {
         navigate("/create-profile");
+      } else if (!data || error) {
+        setError("Could not fetch profile");
       } else {
         setProfile(data);
       }
@@ -96,7 +102,6 @@ export const NewsFeedPage: React.FC = () => {
       setError(null);
 
       // Use user from state, do not call setUser here
-      // Fetch posts with profiles, likes, and comments
       let query = supabase
         .from("posts")
         .select(
@@ -300,12 +305,12 @@ export const NewsFeedPage: React.FC = () => {
         />
       )}
 
-      <h1 className="text-2xl font-bold mb-4 text-center">News Feed</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
 
       {user && (
         <form className="mb-6" onSubmit={handleSubmit}>
           <textarea
-            className="w-full border rounded p-2 mb-2"
+            className="w-full border rounded p-2 mb-2 text-black"
             rows={2}
             placeholder="What's on your mind?"
             value={content}
@@ -368,13 +373,13 @@ export const NewsFeedPage: React.FC = () => {
                   {new Date(post.created_at).toLocaleString("en-GB")}
                 </span>
               </div>
-              <div className="mb-2 whitespace-pre-line break-words">
+              <div className="mb-2 whitespace-pre-line break-words text-black">
                 {editingPostId === post.id ? (
                   <form onSubmit={handleEditSubmit}>
                     <textarea
                       value={editContent}
                       onChange={e => setEditContent(e.target.value)}
-                      className="border rounded w-full p-1 mb-2"
+                      className="border rounded w-full p-1 mb-2 text-black"
                       rows={2}
                       required
                     />
@@ -456,14 +461,14 @@ export const NewsFeedPage: React.FC = () => {
                           ) : (
                             <div className="w-6 h-6 rounded-full bg-gray-300 mr-2" />
                           )}
-                          <span className="font-semibold text-sm">
+                          <span className="font-semibold text-sm text-black">
                             {comment.profile?.name || "User"}
                           </span>
                           <span className="ml-2 text-xs text-gray-500">
                             {new Date(comment.created_at).toLocaleString("en-GB")}
                           </span>
                         </div>
-                        <div className="ml-8 text-sm">{comment.content}</div>
+                        <div className="ml-8 text-sm text-black">{comment.content}</div>
                       </li>
                     ))}
                   </ul>
@@ -473,7 +478,7 @@ export const NewsFeedPage: React.FC = () => {
                   >
                     <input
                       type="text"
-                      className="border rounded flex-1 p-1"
+                      className="border rounded flex-1 p-1 text-black"
                       placeholder="Add a comment..."
                       value={commentInputs[post.id] || ""}
                       onChange={e => handleCommentInput(post.id, e.target.value)}
