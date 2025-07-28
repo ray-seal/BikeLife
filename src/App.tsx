@@ -15,7 +15,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/callback" element={<CallbackPage />} />
         <Route path="/create-profile" element={<CreateProfilePage />} />
-        <Route path="/test" element={div style={{ padding:32, fontSize: 24 }}>Test Route Works</div>} />
+        <Route path="/test" element={div style={{ padding: 32, fontSize: 24 }}>Test Route Works</div>} />
         {/* Catch-all must go last */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
