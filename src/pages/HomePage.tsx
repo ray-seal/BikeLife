@@ -17,7 +17,8 @@ export const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data, error }) => {
+      console.log("Supabase getUser() on mount:", { data, error });
       if (data.user) {
         setUser(data.user);
         setView("user");
@@ -25,6 +26,7 @@ export const HomePage: React.FC = () => {
       setLoading(false); // <-- Set loading to false after check
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Supabase onAuthStateChange event:", _event, session);
       setUser(session?.user ?? null);
       if (session?.user) setView("user");
     });
@@ -40,6 +42,7 @@ export const HomePage: React.FC = () => {
       email,
       password,
     });
+    console.log("handleSignUp result:", { data, error });
     if (error) setError(error.message);
     else {
       setUser(data.user ?? null);
@@ -55,6 +58,7 @@ export const HomePage: React.FC = () => {
       email,
       password,
     });
+    console.log("handleLogIn result:", { data, error });
     if (error) setError(error.message);
     else {
       setUser(data.user ?? null);
@@ -68,10 +72,11 @@ export const HomePage: React.FC = () => {
     setView("login");
     setEmail("");
     setPassword("");
+    console.log("User logged out");
   };
 
-  // Debug log for troubleshooting
-  console.log("view:", view, "user:", user);
+  // Debug log for current state
+  console.log("Current state:", { view, user, loading });
 
   // Show loading indicator while checking session
   if (loading) return <div>Loading...</div>;
