@@ -17,11 +17,11 @@ export const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data, error }) => {
+    supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUser(data.user);
         setView("user");
-        navigate("/news-feed"); // Redirect to news feed if already logged in
+        navigate("/news-feed");
       }
       setLoading(false);
     });
@@ -29,7 +29,7 @@ export const HomePage: React.FC = () => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setView("user");
-        navigate("/news-feed"); // Redirect to news feed after login/signup
+        navigate("/news-feed");
       }
     });
     return () => {
@@ -64,7 +64,7 @@ export const HomePage: React.FC = () => {
     else {
       setUser(data.user ?? null);
       setView("user");
-      navigate("/news-feed"); // Redirect to news feed after login
+      navigate("/news-feed");
     }
   };
 
