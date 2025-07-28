@@ -37,11 +37,21 @@ export const CreateProfilePage: React.FC = () => {
       return;
     }
 
-    // Insert into "profile" table (not "profiles")
+    // Debug: log values sent to Supabase
+    console.log({
+      user_id: user.id,
+      name,
+      dream_bike: dreamBike,
+      current_bike: currentBike,
+      licence_held: licenceHeld,
+      location,
+    });
+
+    // Insert or update the "profile" table
     const { error: insertError } = await supabase.from("profile").upsert(
       [
         {
-          user_id: user.id, // assuming you have a user_id column as FK to auth.users
+          user_id: user.id,
           name,
           dream_bike: dreamBike,
           current_bike: currentBike,
@@ -53,12 +63,13 @@ export const CreateProfilePage: React.FC = () => {
     );
 
     if (insertError) {
+      console.error("Supabase upsert error:", insertError);
       setError(insertError.message);
     } else {
       setSuccess("Profile saved!");
       setTimeout(() => {
         navigate("/");
-      }, 1500);
+      }, 1200);
     }
     setLoading(false);
   };
@@ -72,7 +83,7 @@ export const CreateProfilePage: React.FC = () => {
           placeholder="Your Name"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded text-black"
           required
         />
         <input
@@ -80,7 +91,7 @@ export const CreateProfilePage: React.FC = () => {
           placeholder="Dream Bike"
           value={dreamBike}
           onChange={e => setDreamBike(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded text-black"
           required
         />
         <input
@@ -88,21 +99,21 @@ export const CreateProfilePage: React.FC = () => {
           placeholder="Current Bike"
           value={currentBike}
           onChange={e => setCurrentBike(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded text-black"
         />
         <input
           type="text"
           placeholder="Licence Held"
           value={licenceHeld}
           onChange={e => setLicenceHeld(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded text-black"
         />
         <input
           type="text"
           placeholder="Location"
           value={location}
           onChange={e => setLocation(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded text-black"
         />
         <button
           type="submit"
