@@ -39,12 +39,14 @@ export const NewsFeedPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Fetch logged-in user & profile
+  // For editing posts
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState<string>("");
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user ?? null);
       if (data.user) {
-        // Fetch profile info for avatar
         const { data: profileData } = await supabase
           .from("profile")
           .select("user_id,name,profile_pic_url")
@@ -55,13 +57,9 @@ export const NewsFeedPage: React.FC = () => {
     });
   }, []);
 
-  // Fetch posts (with user profiles, like and comment counts)
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
-      // The table names are: profile, posts, likes, comments
-      // posts.user_id should reference profile.user_id
-      // likes and comments have post_id
       const { data, error } = await supabase
         .from("posts")
         .select(`
@@ -78,7 +76,6 @@ export const NewsFeedPage: React.FC = () => {
         return;
       }
 
-      // Map like/comment counts
       const mapped = (data as any[]).map((p) => ({
         ...p,
         like_count: p.likes?.[0]?.count || 0,
@@ -90,7 +87,6 @@ export const NewsFeedPage: React.FC = () => {
     fetchPosts();
   }, [refresh]);
 
-  // Upload image to bucket and return public URL
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
@@ -103,7 +99,6 @@ export const NewsFeedPage: React.FC = () => {
     return urlData.publicUrl;
   };
 
-  // Handle new post
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -137,7 +132,6 @@ export const NewsFeedPage: React.FC = () => {
     }
   };
 
-  // Like a post
   const handleLike = async (postId: string) => {
     if (!user) return;
     await supabase
@@ -146,10 +140,35 @@ export const NewsFeedPage: React.FC = () => {
     setRefresh((r) => r + 1);
   };
 
-  // Render
+  // Edit post handlers
+  const handleEdit = (post: Post) => {
+    setEditingPostId(post.id);
+    setEditContent(post.content || "");
+  };
+
+  const handleEditCancel = () => {
+    setEditingPostId(null);
+    setEditContent("");
+  };
+
+  const handleEditSave = async (postId: string) => {
+    if (!user) return;
+    const { error: updateError } = await supabase
+      .from("posts")
+      .update({ content: editContent })
+      .eq("id", postId)
+      .eq("user_id", user.id);
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setEditingPostId(null);
+      setEditContent("");
+      setRefresh((r) => r + 1);
+    }
+  };
+
   return (
     <main className="max-w-md mx-auto p-4 relative">
-      {/* User avatar top left */}
       {profile && profile.profile_pic_url && (
         <img
           src={profile.profile_pic_url}
@@ -161,7 +180,6 @@ export const NewsFeedPage: React.FC = () => {
       )}
       <h1 className="text-2xl font-bold mb-4 text-center">News Feed</h1>
 
-      {/* Create post */}
       {user && (
         <form onSubmit={handleSubmit} className="mb-6">
           <textarea
@@ -190,7 +208,6 @@ export const NewsFeedPage: React.FC = () => {
         </form>
       )}
 
-      {/* Posts */}
       {loading ? (
         <div>Loading posts...</div>
       ) : posts.length === 0 ? (
@@ -216,15 +233,53 @@ export const NewsFeedPage: React.FC = () => {
                 )}
                 <Link
                   to={`/profile/${post.user_id}`}
-                  className="font-bold hover:underline"
+                  className="font-bold hover:underline text-black"
                 >
                   {post.profile?.name || "User"}
                 </Link>
                 <span className="ml-auto text-xs text-gray-500">
-                  {new Date(post.created_at).toLocaleString()}
+                  {new Date(post.created_at).toLocaleString("en-GB")}
                 </span>
               </div>
-              {post.content && <p className="mb-2">{post.content}</p>}
+              {editingPostId === post.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    className="border rounded p-2 text-black"
+                    value={editContent}
+                    onChange={e => setEditContent(e.target.value)}
+                    rows={2}
+                    style={{ color: "#000" }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded"
+                      onClick={() => handleEditSave(post.id)}
+                      type="button"
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-1 rounded"
+                      onClick={handleEditCancel}
+                      type="button"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="mb-2 text-black">{post.content}</p>
+                  {post.user_id === user?.id && (
+                    <button
+                      className="text-xs text-blue-600 underline mb-2"
+                      onClick={() => handleEdit(post)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                </>
+              )}
               {post.image_url && (
                 <img
                   src={post.image_url}
@@ -246,7 +301,6 @@ export const NewsFeedPage: React.FC = () => {
                   💬 {post.comment_count || 0}
                 </span>
               </div>
-              {/* TODO: Show comments, allow adding comments */}
             </li>
           ))}
         </ul>
