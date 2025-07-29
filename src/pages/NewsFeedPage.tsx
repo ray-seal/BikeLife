@@ -109,7 +109,6 @@ export const NewsFeedPage: React.FC = () => {
         .select("*")
         .eq("user_id", user.id)
         .single();
-      // Redirect if "no rows" or status 406 (no profile)
       if (
         (!data && error && error.message && error.message.toLowerCase().includes("no rows")) ||
         status === 406
@@ -323,15 +322,6 @@ export const NewsFeedPage: React.FC = () => {
         Log Out
       </button>
 
-      {/* Go to Profile button at top left */}
-      <button
-        onClick={() => navigate("/create-profile")}
-        className="absolute top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
-        style={{ zIndex: 10 }}
-      >
-        Go to Profile
-      </button>
-
       {/* Followers Feed link */}
       <Link
         to="/followers-feed"
@@ -341,57 +331,60 @@ export const NewsFeedPage: React.FC = () => {
         Followers Feed
       </Link>
 
-      {/* Profile pic or placeholder avatar below "Go to Profile" button */}
-      <div style={{ position: "relative", display: "inline-block" }}>
-        {profile && profile.profile_pic_url ? (
-          <img
-            src={profile.profile_pic_url}
-            className="w-10 h-10 rounded-full cursor-pointer absolute top-20 left-4 border-2 border-blue-500"
-            alt="My profile"
-            title="View my profile"
-            onClick={() => navigate("/create-profile")}
-          />
-        ) : (
-          <div
-            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center absolute top-20 left-4 cursor-pointer border-2 border-blue-500"
-            title="View my profile"
-            onClick={() => navigate("/create-profile")}
-          >
-            <span role="img" aria-label="avatar" className="text-2xl">👤</span>
-          </div>
-        )}
-        {hasUnreadNotifications && (
-          <span
-            style={{
-              position: "absolute",
-              top: 76,
-              left: 40,
-              zIndex: 20,
-              width: 12,
-              height: 12,
-              backgroundColor: "red",
-              borderRadius: "50%",
-              border: "2px solid white",
-              boxShadow: "0 0 2px #333",
-              display: "block",
-            }}
-          />
-        )}
-      </div>
-
       <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
 
       {user && (
-        <form className="mb-6" onSubmit={handleSubmit}>
+        <form className="mb-6 flex items-start gap-2" onSubmit={handleSubmit}>
+          {/* Profile pic/avatar, clickable, left of textarea */}
+          <div style={{ position: "relative", display: "inline-block" }}>
+            {profile && profile.profile_pic_url ? (
+              <img
+                src={profile.profile_pic_url}
+                className="w-10 h-10 rounded-full cursor-pointer border-2 border-blue-500"
+                alt="My profile"
+                title="View my profile"
+                onClick={() => navigate("/create-profile")}
+                style={{ marginTop: 2 }}
+              />
+            ) : (
+              <div
+                className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer border-2 border-blue-500"
+                title="View my profile"
+                onClick={() => navigate("/create-profile")}
+                style={{ marginTop: 2 }}
+              >
+                <span role="img" aria-label="avatar" className="text-2xl">👤</span>
+              </div>
+            )}
+            {hasUnreadNotifications && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: 2,
+                  right: 2,
+                  zIndex: 20,
+                  width: 12,
+                  height: 12,
+                  backgroundColor: "red",
+                  borderRadius: "50%",
+                  border: "2px solid white",
+                  boxShadow: "0 0 2px #333",
+                  display: "block",
+                }}
+              />
+            )}
+          </div>
+          {/* Textarea */}
           <textarea
             className="w-full border rounded p-2 mb-2 text-black"
             rows={2}
-            placeholder="What's on your mind?"
+            placeholder="What you revvin' about today?"
             value={content}
             onChange={e => setContent(e.target.value)}
             disabled={uploading}
             required
           />
+          {/* You may want to move the file input outside the flex if it looks odd. */}
           <input
             type="file"
             accept="image/*"
