@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { Notifications } from "../components/Notifications";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
@@ -24,13 +23,6 @@ export const CreateProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Followers logic
-  const [userId, setUserId] = useState<string | null>(null);
-  const [followersCount, setFollowersCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
-  const [followersList, setFollowersList] = useState<any[]>([]);
-  const [followingList, setFollowingList] = useState<any[]>([]);
-
   const navigate = useNavigate();
 
   // Fetch profile on mount
@@ -44,7 +36,6 @@ export const CreateProfilePage: React.FC = () => {
         setLoading(false);
         return;
       }
-      setUserId(user.id);
       const { data, error: fetchError } = await supabase
         .from("profile")
         .select("*")
@@ -68,41 +59,8 @@ export const CreateProfilePage: React.FC = () => {
       setLoading(false);
     };
     fetchProfile();
+    // eslint-disable-next-line
   }, []);
-
-  // Followers/following counts and lists
-  useEffect(() => {
-    if (!userId) return;
-    const fetchCounts = async () => {
-      const { count: followers } = await supabase
-        .from("followers")
-        .select("*", { count: "exact", head: true })
-        .eq("following_id", userId);
-      setFollowersCount(followers ?? 0);
-
-      const { count: following } = await supabase
-        .from("followers")
-        .select("*", { count: "exact", head: true })
-        .eq("follower_id", userId);
-      setFollowingCount(following ?? 0);
-
-      // Get actual lists
-      const { data: followersData } = await supabase
-        .from("followers")
-        .select("follower_id, profile:profile(follower_id:user_id,name,profile_pic_url)")
-        .eq("following_id", userId)
-        .limit(10);
-      setFollowersList(followersData?.map(f => f.profile) ?? []);
-
-      const { data: followingData } = await supabase
-        .from("followers")
-        .select("following_id, profile:profile(following_id:user_id,name,profile_pic_url)")
-        .eq("follower_id", userId)
-        .limit(10);
-      setFollowingList(followingData?.map(f => f.profile) ?? []);
-    };
-    fetchCounts();
-  }, [userId, editMode, success]);
 
   // Preview selected image
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,9 +178,6 @@ export const CreateProfilePage: React.FC = () => {
 
   return (
     <main className="p-4 max-w-md mx-auto">
-      <div className="flex justify-end mb-2">
-        <Notifications />
-      </div>
       <h2 className="text-xl mb-4 text-center">Your Profile</h2>
       <button
         onClick={() => navigate("/news-feed")}
@@ -247,45 +202,6 @@ export const CreateProfilePage: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex justify-center gap-4 mb-4">
-            <div>
-              <span className="font-semibold">Followers:</span> {followersCount}
-            </div>
-            <div>
-              <span className="font-semibold">Following:</span> {followingCount}
-            </div>
-          </div>
-          {/* Followers list preview */}
-          {followersList.length > 0 && (
-            <div className="w-full mb-2">
-              <span className="font-semibold">Recent Followers:</span>
-              <div className="flex gap-2 mt-1">
-                {followersList.map(f => f && (
-                  <div key={f.user_id} className="flex flex-col items-center">
-                    {f.profile_pic_url ?
-                      <img src={f.profile_pic_url} alt="Follower" className="w-8 h-8 rounded-full" />
-                      : <span role="img" aria-label="avatar" className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">👤</span>}
-                    <span className="text-xs">{f.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {followingList.length > 0 && (
-            <div className="w-full mb-4">
-              <span className="font-semibold">Recent Following:</span>
-              <div className="flex gap-2 mt-1">
-                {followingList.map(f => f && (
-                  <div key={f.user_id} className="flex flex-col items-center">
-                    {f.profile_pic_url ?
-                      <img src={f.profile_pic_url} alt="Following" className="w-8 h-8 rounded-full" />
-                      : <span role="img" aria-label="avatar" className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">👤</span>}
-                    <span className="text-xs">{f.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           <div className="w-full">
             <div className="mb-2">
               <span className="font-semibold">Name:</span> {profile.name}
