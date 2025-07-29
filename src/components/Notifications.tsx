@@ -9,6 +9,7 @@ export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [show, setShow] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -16,6 +17,7 @@ export const Notifications: React.FC = () => {
     });
   }, []);
 
+  // Fetch notifications and update "hasUnread"
   useEffect(() => {
     if (!userId) return;
     const fetchNotifications = async () => {
@@ -25,10 +27,26 @@ export const Notifications: React.FC = () => {
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(10);
-      setNotifications(data || []);
+      setNotifications(data ?? []);
+      setHasUnread((data ?? []).some(n => n.read === false));
     };
     fetchNotifications();
-  }, [userId]);
+  }, [userId, show]);
+
+  // Mark notifications as read when the dropdown is opened
+  useEffect(() => {
+    if (show && userId && hasUnread) {
+      const markRead = async () => {
+        await supabase
+          .from("notifications")
+          .update({ read: true })
+          .eq("user_id", userId)
+          .eq("read", false);
+        setHasUnread(false);
+      };
+      markRead();
+    }
+  }, [show, userId, hasUnread]);
 
   return (
     <div className="relative inline-block mr-4">
@@ -38,26 +56,29 @@ export const Notifications: React.FC = () => {
         aria-label="Notifications"
       >
         <span role="img" aria-label="bell" className="text-2xl">🔔</span>
-        {notifications.some(n => !n.read) && (
+        {hasUnread && (
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
         )}
       </button>
       {show && (
         <div className="absolute right-0 mt-2 w-64 bg-white border rounded shadow-lg z-50 p-2">
           <h3 className="font-semibold mb-2">Notifications</h3>
-          {notifications.length === 0 && <div className="text-gray-500">No notifications.</div>}
-          <ul>
-            {notifications.map(n => (
-              <li key={n.id} className="mb-2 border-b pb-2 last:border-b-0 last:pb-0">
-                {n.type === "follow" && n.actor?.name && (
-                  <span>
-                    <span className="font-bold">{n.actor.name}</span> started following you.
-                  </span>
-                )}
-                <span className="block text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
-              </li>
-            ))}
-          </ul>
+          {notifications.length === 0 ? (
+            <div className="text-gray-500">No notifications.</div>
+          ) : (
+            <ul>
+              {notifications.map(n => (
+                <li key={n.id} className="mb-2 border-b pb-2 last:border-b-0 last:pb-0">
+                  {n.type === "follow" && n.actor?.name && (
+                    <span>
+                      <span className="font-bold">{n.actor.name}</span> started following you.
+                    </span>
+                  )}
+                  <span className="block text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>
