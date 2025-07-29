@@ -21,34 +21,51 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (!userId) return;
     const fetchNotifications = async () => {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select(`
-          *,
-          actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
-        `)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) {
-        console.error("Supabase notifications fetch error", error);
+      // Try join first, fallback to simple if error
+      let data, error;
+      try {
+        const result = await supabase
+          .from("notifications")
+          .select(`
+            *,
+            actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
+          `)
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        data = result.data;
+        error = result.error;
+      } catch (e) {
+        error = e;
       }
-      console.log("Fetched notifications", data);
+      if (error || !data) {
+        // fallback: just fetch notifications
+        const result = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        data = result.data;
+        error = result.error;
+      }
       setNotifications(data || []);
+      console.log("Fetched notifications", data);
     };
     fetchNotifications();
   }, [userId]);
 
   const renderNotificationMessage = (n: any) => {
-    if (!n.actor) return null;
+    // If joined actor profile exists
+    const actor = n.actor || { user_id: n.actor_id, name: "User" };
     if (n.type === "follow") {
       return (
         <>
           <Link
-            to={`/profile/${n.actor.user_id}`}
+            to={`/profile/${actor.user_id}`}
             className="font-bold hover:underline text-blue-700"
           >
-            {n.actor.name || "User"}
+            {actor.name || "User"}
           </Link>{" "}
           started following you.
         </>
@@ -58,10 +75,10 @@ export const Notifications: React.FC = () => {
       return (
         <>
           <Link
-            to={`/profile/${n.actor.user_id}`}
+            to={`/profile/${actor.user_id}`}
             className="font-bold hover:underline text-blue-700"
           >
-            {n.actor.name || "User"}
+            {actor.name || "User"}
           </Link>{" "}
           liked your post.
         </>
@@ -71,23 +88,24 @@ export const Notifications: React.FC = () => {
       return (
         <>
           <Link
-            to={`/profile/${n.actor.user_id}`}
+            to={`/profile/${actor.user_id}`}
             className="font-bold hover:underline text-blue-700"
           >
-            {n.actor.name || "User"}
+            {actor.name || "User"}
           </Link>{" "}
           commented on your post.
         </>
       );
     }
+    // fallback generic message
     return (
       <>
         Notification from{" "}
         <Link
-          to={`/profile/${n.actor.user_id}`}
+          to={`/profile/${actor.user_id}`}
           className="font-bold hover:underline text-blue-700"
         >
-          {n.actor.name || "User"}
+          {actor.name || "User"}
         </Link>
         .
       </>
