@@ -316,16 +316,7 @@ export const NewsFeedPage: React.FC = () => {
         Log Out
       </button>
 
-      {/* Go to Profile button at top left */}
-      <button
-        onClick={() => navigate("/create-profile")}
-        className="absolute top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
-        style={{ zIndex: 10 }}
-      >
-        Go to Profile
-      </button>
-
-      {/* Profile avatar at top left, away from textarea */}
+      {/* Profile avatar at top left, clickable */}
       <div
         style={{
           position: "absolute",
