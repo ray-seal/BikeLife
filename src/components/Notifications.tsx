@@ -10,7 +10,6 @@ export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [show, setShow] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -21,38 +20,27 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (!userId) return;
     const fetchNotifications = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("notifications")
         .select(`
           *,
-          actor:profile(actor_id, user_id, name, profile_pic_url),
-          post:posts(id, content)
+          actor:profile(actor_id, user_id, name, profile_pic_url)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(20);
-      setNotifications(data ?? []);
-      setHasUnread((data ?? []).some(n => n.read === false));
+      if (error) {
+        console.error("Supabase notifications fetch error", error);
+      }
+      setNotifications(data || []);
     };
     fetchNotifications();
-  }, [userId, show]);
+  }, [userId]);
 
-  useEffect(() => {
-    if (show && userId && hasUnread) {
-      const markRead = async () => {
-        await supabase
-          .from("notifications")
-          .update({ read: true })
-          .eq("user_id", userId)
-          .eq("read", false);
-        setHasUnread(false);
-      };
-      markRead();
-    }
-  }, [show, userId, hasUnread]);
-
-  const renderNotification = (n: any) => {
-    if (n.type === "follow" && n.actor) {
+  // Helper to render notification message
+  const renderNotificationMessage = (n: any) => {
+    if (!n.actor) return null;
+    if (n.type === "follow") {
       return (
         <>
           <Link
@@ -65,7 +53,7 @@ export const Notifications: React.FC = () => {
         </>
       );
     }
-    if (n.type === "like" && n.actor && n.post) {
+    if (n.type === "like") {
       return (
         <>
           <Link
@@ -74,11 +62,11 @@ export const Notifications: React.FC = () => {
           >
             {n.actor.name || "User"}
           </Link>{" "}
-          liked your post: <span className="italic">{n.post.content.slice(0, 40)}...</span>
+          liked your post.
         </>
       );
     }
-    if (n.type === "comment" && n.actor && n.post) {
+    if (n.type === "comment") {
       return (
         <>
           <Link
@@ -87,11 +75,11 @@ export const Notifications: React.FC = () => {
           >
             {n.actor.name || "User"}
           </Link>{" "}
-          commented on your post: <span className="italic">{n.post.content.slice(0, 40)}...</span>
+          commented on your post.
         </>
       );
     }
-    return "Unknown notification";
+    return null;
   };
 
   return (
@@ -102,7 +90,7 @@ export const Notifications: React.FC = () => {
         aria-label="Notifications"
       >
         <span role="img" aria-label="bell" className="text-2xl">🔔</span>
-        {hasUnread && (
+        {notifications.some(n => !n.read) && (
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
         )}
       </button>
@@ -115,8 +103,10 @@ export const Notifications: React.FC = () => {
             <ul>
               {notifications.map(n => (
                 <li key={n.id} className="mb-2 border-b pb-2 last:border-b-0 last:pb-0">
-                  {renderNotification(n)}
-                  <span className="block text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
+                  {renderNotificationMessage(n)}
+                  <span className="block text-xs text-gray-400">
+                    {new Date(n.created_at).toLocaleString()}
+                  </span>
                 </li>
               ))}
             </ul>
