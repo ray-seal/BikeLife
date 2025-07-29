@@ -187,7 +187,7 @@ export const NewsFeedPage: React.FC = () => {
     return urlData.publicUrl;
   };
 
-  // Improved function with debug logging and created_at field
+  // CRUCIAL: This uses user.id from Supabase Auth as user_id for RLS
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -206,6 +206,7 @@ export const NewsFeedPage: React.FC = () => {
       if (imageFile) {
         image_url = await uploadImage(imageFile);
       }
+      // Always use Supabase Auth UID for user_id
       const postData = {
         user_id: user.id,
         content,
