@@ -62,33 +62,12 @@ export const NewsFeedPage: React.FC = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
-  // Notifications
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
-
   // Fetch user on mount (only once!)
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null);
     });
   }, []);
-
-  // Fetch unread notifications for red dot
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user) {
-        setHasUnreadNotifications(false);
-        return;
-      }
-      const { data } = await supabase
-        .from("notifications")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("read", false)
-        .limit(1);
-      setHasUnreadNotifications((data ?? []).length > 0);
-    };
-    fetchNotifications();
-  }, [user, refresh]);
 
   // Redirect to /create-profile if user is logged in but has no profile
   useEffect(() => {
@@ -313,44 +292,34 @@ export const NewsFeedPage: React.FC = () => {
         Log Out
       </button>
 
-      {/* Clickable profile picture replaces "Go to Profile" button */}
-      <div
-        className="absolute top-4 left-4"
-        style={{ zIndex: 10, cursor: "pointer", position: "absolute" }}
+      {/* Go to Profile button at top left */}
+      <button
         onClick={() => navigate("/create-profile")}
-        title="Go to Profile"
+        className="absolute top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        style={{ zIndex: 10 }}
       >
-        <div style={{ position: "relative", display: "inline-block" }}>
-          {profile && profile.profile_pic_url ? (
-            <img
-              src={profile.profile_pic_url}
-              className="w-10 h-10 rounded-full border-2 border-blue-500"
-              alt="My profile"
-            />
-          ) : (
-            <div
-              className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center border-2 border-blue-500"
-            >
-              <span role="img" aria-label="avatar" className="text-2xl">👤</span>
-            </div>
-          )}
-          {hasUnreadNotifications && (
-            <span
-              style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                width: 12,
-                height: 12,
-                backgroundColor: "red",
-                borderRadius: "50%",
-                border: "2px solid white",
-                boxShadow: "0 0 2px #333",
-                display: "block",
-              }}
-            />
-          )}
-        </div>
+        Go to Profile
+      </button>
+
+      {/* Profile pic or placeholder avatar below "Go to Profile" button */}
+      <div style={{ position: "relative", display: "inline-block" }}>
+        {profile && profile.profile_pic_url ? (
+          <img
+            src={profile.profile_pic_url}
+            className="w-10 h-10 rounded-full cursor-pointer absolute top-20 left-4 border-2 border-blue-500"
+            alt="My profile"
+            title="View my profile"
+            onClick={() => navigate("/create-profile")}
+          />
+        ) : (
+          <div
+            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center absolute top-20 left-4 cursor-pointer border-2 border-blue-500"
+            title="View my profile"
+            onClick={() => navigate("/create-profile")}
+          >
+            <span role="img" aria-label="avatar" className="text-2xl">👤</span>
+          </div>
+        )}
       </div>
 
       <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
@@ -365,7 +334,6 @@ export const NewsFeedPage: React.FC = () => {
             onChange={e => setContent(e.target.value)}
             disabled={uploading}
             required
-            style={{ background: "inherit" }} // ensure no blue bar
           />
           <input
             type="file"
