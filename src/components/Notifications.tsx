@@ -20,99 +20,33 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (!userId) return;
     const fetchNotifications = async () => {
-      let data, error;
-      try {
-        const result = await supabase
-          .from("notifications")
-          .select(`
-            *,
-            actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
-          `)
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        data = result.data;
-        error = result.error;
-      } catch (e) {
-        error = e;
-      }
-      if (error || !data) {
-        const result = await supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        data = result.data;
-      }
+      const { data, error } = await supabase
+        .from("notifications")
+        .select(`
+          *,
+          actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
       setNotifications(data || []);
     };
     fetchNotifications();
   }, [userId]);
 
   const renderNotificationMessage = (n: any) => {
-    // Prefer actor.name, fallback to actor.user_id if name is missing
-    const username =
-      n.actor && n.actor.name
-        ? n.actor.name
-        : n.actor && n.actor.user_id
-        ? n.actor.user_id
-        : n.actor_id || "Unknown";
-    const profileLink =
-      n.actor && n.actor.user_id
-        ? n.actor.user_id
-        : n.actor_id || "";
-
-    if (n.type === "follow") {
-      return (
-        <>
-          <Link
-            to={`/profile/${profileLink}`}
-            className="font-bold hover:underline text-blue-700"
-          >
-            {username}
-          </Link>{" "}
-          started following you.
-        </>
-      );
-    }
-    if (n.type === "like") {
-      return (
-        <>
-          <Link
-            to={`/profile/${profileLink}`}
-            className="font-bold hover:underline text-blue-700"
-          >
-            {username}
-          </Link>{" "}
-          liked your post.
-        </>
-      );
-    }
-    if (n.type === "comment") {
-      return (
-        <>
-          <Link
-            to={`/profile/${profileLink}`}
-            className="font-bold hover:underline text-blue-700"
-          >
-            {username}
-          </Link>{" "}
-          commented on your post.
-        </>
-      );
-    }
-    // fallback generic message
+    // Use actor.name if present, otherwise fallback to actor.user_id
+    const actorName = n.actor?.name?.trim() ? n.actor.name : n.actor?.user_id || n.actor_id;
     return (
       <>
-        Notification from{" "}
         <Link
-          to={`/profile/${profileLink}`}
+          to={`/profile/${n.actor?.user_id || n.actor_id}`}
           className="font-bold hover:underline text-blue-700"
         >
-          {username}
-        </Link>
-        .
+          {actorName}
+        </Link>{" "}
+        started following you.
       </>
     );
   };
