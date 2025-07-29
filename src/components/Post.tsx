@@ -61,11 +61,6 @@ export const Post: React.FC<Props> = ({
 }) => {
   const navigate = useNavigate();
 
-  // List of who liked, for display
-  const likesDisplay = post.likes_list?.map(like =>
-    like.profile?.name || like.user_id
-  ).join(", ");
-
   return (
     <li className="border rounded p-3 bg-white shadow">
       <div className="flex items-center mb-2">
@@ -162,12 +157,12 @@ export const Post: React.FC<Props> = ({
       {post.likes_list && post.likes_list.length > 0 && (
         <div className="px-1 pt-1 pb-2 text-gray-900 font-medium text-sm">
           <span className="text-gray-800">Liked by </span>
-          {post.likes_list.map((like, i) => (
+          {post.likes_list?.map((like, i) => (
             <React.Fragment key={like.user_id}>
               <Link to={`/profile/${like.user_id}`} className="font-bold hover:underline">
                 {like.profile?.name || like.user_id}
               </Link>
-              {i < post.likes_list.length - 1 ? ", " : ""}
+              {i < (post.likes_list?.length ?? 0) - 1 ? ", " : ""}
             </React.Fragment>
           ))}
         </div>
