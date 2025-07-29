@@ -38,6 +38,11 @@ type Comment = {
   profile?: Profile;
 };
 
+type LikeUser = {
+  user_id: string;
+  profile: Profile;
+};
+
 const BUCKET = "post-images";
 
 export const NewsFeedPage: React.FC = () => {
@@ -62,6 +67,9 @@ export const NewsFeedPage: React.FC = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
+  // Likes modal
+  const [likesModal, setLikesModal] = useState<{ postId: string | null, users: LikeUser[] }>({ postId: null, users: [] });
+
   // Fetch user on mount (only once!)
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -79,7 +87,6 @@ export const NewsFeedPage: React.FC = () => {
         .select("*")
         .eq("user_id", user.id)
         .single();
-      // Redirect if "no rows" or status 406 (no profile)
       if (
         (!data && error && error.message && error.message.toLowerCase().includes("no rows")) ||
         status === 406
@@ -144,6 +151,17 @@ export const NewsFeedPage: React.FC = () => {
     };
     fetchPosts();
   }, [refresh, user]);
+
+  // Likes modal fetch
+  const showLikesModal = async (postId: string) => {
+    const { data } = await supabase
+      .from("likes")
+      .select("user_id, profile:profile(user_id, name, profile_pic_url)")
+      .eq("post_id", postId);
+    setLikesModal({ postId, users: data ?? [] });
+  };
+
+  const closeLikesModal = () => setLikesModal({ postId: null, users: [] });
 
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
@@ -301,21 +319,27 @@ export const NewsFeedPage: React.FC = () => {
         Go to Profile
       </button>
 
-      {/* Profile pic or placeholder avatar below "Go to Profile" button */}
-      <div style={{ position: "relative", display: "inline-block" }}>
+      {/* Profile avatar at top left, away from textarea */}
+      <div
+        style={{
+          position: "absolute",
+          top: 16,
+          left: 16,
+          zIndex: 10,
+          cursor: "pointer"
+        }}
+        title="View my profile"
+        onClick={() => navigate("/create-profile")}
+      >
         {profile && profile.profile_pic_url ? (
           <img
             src={profile.profile_pic_url}
-            className="w-10 h-10 rounded-full cursor-pointer absolute top-20 left-4 border-2 border-blue-500"
+            className="w-10 h-10 rounded-full border-2 border-blue-500"
             alt="My profile"
-            title="View my profile"
-            onClick={() => navigate("/create-profile")}
           />
         ) : (
           <div
-            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center absolute top-20 left-4 cursor-pointer border-2 border-blue-500"
-            title="View my profile"
-            onClick={() => navigate("/create-profile")}
+            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center border-2 border-blue-500"
           >
             <span role="img" aria-label="avatar" className="text-2xl">👤</span>
           </div>
@@ -334,6 +358,11 @@ export const NewsFeedPage: React.FC = () => {
             onChange={e => setContent(e.target.value)}
             disabled={uploading}
             required
+            style={{
+              outline: "none",
+              boxShadow: "none",
+              borderColor: "#ccc"
+            }}
           />
           <input
             type="file"
@@ -356,6 +385,37 @@ export const NewsFeedPage: React.FC = () => {
       )}
 
       {error && <div className="text-red-500 mb-2">{error}</div>}
+
+      {/* Likes Modal */}
+      {likesModal.postId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded p-4 w-80">
+            <h4 className="font-bold mb-2">Liked by</h4>
+            <ul>
+              {likesModal.users.map(u => (
+                <li key={u.user_id} className="mb-2 flex items-center gap-2">
+                  {u.profile?.profile_pic_url ? (
+                    <img src={u.profile.profile_pic_url} className="w-6 h-6 rounded-full" alt={u.profile?.name || "User"} />
+                  ) : (
+                    <span role="img" aria-label="avatar" className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-base">👤</span>
+                  )}
+                  <Link
+                    to={`/profile/${u.user_id}`}
+                    className="font-semibold hover:underline text-blue-700"
+                    onClick={closeLikesModal}
+                  >
+                    {u.profile?.name || "User"}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <button
+              className="mt-2 px-4 py-2 bg-gray-300 rounded"
+              onClick={closeLikesModal}
+            >Close</button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div>Loading...</div>
@@ -405,6 +465,11 @@ export const NewsFeedPage: React.FC = () => {
                       className="border rounded w-full p-1 mb-2 text-black"
                       rows={2}
                       required
+                      style={{
+                        outline: "none",
+                        boxShadow: "none",
+                        borderColor: "#ccc"
+                      }}
                     />
                     <div className="flex gap-2">
                       <button
@@ -444,7 +509,14 @@ export const NewsFeedPage: React.FC = () => {
                       : "bg-gray-200 text-gray-700"
                   }`}
                 >
-                  👍 {post.like_count || 0}
+                  👍
+                </button>
+                <button
+                  onClick={() => showLikesModal(post.id)}
+                  className="px-2 py-1 rounded bg-gray-200 text-gray-700"
+                  title="Show who liked this"
+                >
+                  {post.like_count || 0}
                 </button>
                 <button
                   onClick={() => toggleShowComments(post.id)}
@@ -488,9 +560,12 @@ export const NewsFeedPage: React.FC = () => {
                               <span role="img" aria-label="avatar" className="text-base">👤</span>
                             </div>
                           )}
-                          <span className="font-semibold text-sm text-black">
+                          <Link
+                            to={`/profile/${comment.profile?.user_id}`}
+                            className="font-semibold text-sm hover:underline text-blue-700"
+                          >
                             {comment.profile?.name || "User"}
-                          </span>
+                          </Link>
                           <span className="ml-2 text-xs text-gray-500">
                             {new Date(comment.created_at).toLocaleString("en-GB")}
                           </span>
@@ -511,6 +586,11 @@ export const NewsFeedPage: React.FC = () => {
                       onChange={e => handleCommentInput(post.id, e.target.value)}
                       disabled={submittingComment[post.id]}
                       required
+                      style={{
+                        outline: "none",
+                        boxShadow: "none",
+                        borderColor: "#ccc"
+                      }}
                     />
                     <button
                       type="submit"
