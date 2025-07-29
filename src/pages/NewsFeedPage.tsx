@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
 import { Post } from "../components/Post"; // Adjust path as needed!
-import { supabase } from "../supabaseClient";
+import { supabase } from "../supabaseClient"; // Use your shared client instance
 
 type Profile = {
   user_id: string;
@@ -44,7 +44,7 @@ type Like = {
   profile?: Profile;
 };
 
-const BUCKET = "post-images";
+const POST_BUCKET = "post-images";
 
 export const NewsFeedPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -172,19 +172,19 @@ export const NewsFeedPage: React.FC = () => {
     fetchPosts();
   }, [refresh, user]);
 
+  // Image upload for all posts uses post-images bucket
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
     const { error } = await supabase.storage
-      .from(BUCKET)
+      .from(POST_BUCKET)
       .upload(fileName, file);
 
     if (error) throw error;
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+    const { data: urlData } = supabase.storage.from(POST_BUCKET).getPublicUrl(fileName);
     return urlData.publicUrl;
   };
 
-  // CRUCIAL: This uses user.id from Supabase Auth as user_id for RLS
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -203,15 +203,13 @@ export const NewsFeedPage: React.FC = () => {
       if (imageFile) {
         image_url = await uploadImage(imageFile);
       }
-      // Always use Supabase Auth UID for user_id
-      const postData = {
-        user_id: user.id,
-        content,
-        image_url,
-        created_at: new Date().toISOString(),
-      };
-      console.log("Insert post data:", postData); // Debugging output
-      const { error: insertError } = await supabase.from("posts").insert([postData]);
+      const { error: insertError } = await supabase.from("posts").insert([
+        {
+          user_id: user.id,
+          content,
+          image_url,
+        },
+      ]);
       if (insertError) throw insertError;
       setContent("");
       setImageFile(null);
@@ -287,14 +285,13 @@ export const NewsFeedPage: React.FC = () => {
     setError(null);
 
     try {
-      const commentData = {
-        post_id: postId,
-        user_id: user.id,
-        content: commentInputs[postId].trim(),
-        created_at: new Date().toISOString(),
-      };
-      console.log("Insert comment data:", commentData); // Debugging output
-      const { error: insertError } = await supabase.from("comments").insert([commentData]);
+      const { error: insertError } = await supabase.from("comments").insert([
+        {
+          post_id: postId,
+          user_id: user.id,
+          content: commentInputs[postId].trim(),
+        },
+      ]);
       if (insertError) throw insertError;
       setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
       setRefresh((r) => r + 1);
