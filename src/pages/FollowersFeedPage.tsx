@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { Post } from "../components/Post"; // Adjust path as needed
 import { supabase } from "../supabaseClient";
 
