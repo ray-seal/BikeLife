@@ -16,6 +16,7 @@ export const UserProfilePage: React.FC = () => {
   const [followersCount, setFollowersCount] = useState<number>(0);
   const [followingCount, setFollowingCount] = useState<number>(0);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -79,6 +80,7 @@ export const UserProfilePage: React.FC = () => {
 
   const handleFollow = async () => {
     if (!currentUserId || !user_id || currentUserId === user_id) return;
+    setFollowLoading(true);
     // Add follower
     const { error } = await supabase
       .from("followers")
@@ -94,16 +96,19 @@ export const UserProfilePage: React.FC = () => {
           type: "follow"
         }]);
     }
+    setFollowLoading(false);
   };
 
   const handleUnfollow = async () => {
     if (!currentUserId || !user_id || currentUserId === user_id) return;
+    setFollowLoading(true);
     await supabase
       .from("followers")
       .delete()
       .eq("follower_id", currentUserId)
       .eq("following_id", user_id);
     setIsFollowing(false);
+    setFollowLoading(false);
   };
 
   if (loading) return <main>Loading...</main>;
@@ -140,21 +145,25 @@ export const UserProfilePage: React.FC = () => {
       )}
       {/* Show follow/unfollow button unless viewing own profile */}
       {currentUserId && user_id !== currentUserId && (
-        isFollowing ? (
-          <button
-            className="mb-4 px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-            onClick={handleUnfollow}
-          >
-            Unfollow
-          </button>
-        ) : (
-          <button
-            className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            onClick={handleFollow}
-          >
-            Follow
-          </button>
-        )
+        <div className="flex justify-center mb-4">
+          {isFollowing ? (
+            <button
+              className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+              onClick={handleUnfollow}
+              disabled={followLoading}
+            >
+              {followLoading ? "..." : "Unfollow"}
+            </button>
+          ) : (
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={handleFollow}
+              disabled={followLoading}
+            >
+              {followLoading ? "..." : "Follow"}
+            </button>
+          )}
+        </div>
       )}
       <div className="mb-2"><span className="font-semibold">Dream Bike:</span> {profile.dream_bike}</div>
       <div className="mb-2"><span className="font-semibold">Current Bike:</span> {profile.current_bike}</div>
