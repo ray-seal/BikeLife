@@ -22,9 +22,10 @@ export const Notifications: React.FC = () => {
     const fetchNotifications = async () => {
       const { data, error } = await supabase
         .from("notifications")
+        // This join must use actor_id as the user_id in the profile table
         .select(`
           *,
-          actor:profile(actor_id, user_id, name, profile_pic_url)
+          actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
