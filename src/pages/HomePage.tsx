@@ -3,10 +3,6 @@ import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
-// Initialize Supabase client
-const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
-const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const HomePage: React.FC = () => {
   const [view, setView] = useState<"login" | "signup" | "user">("login");
