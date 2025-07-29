@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
@@ -22,10 +23,14 @@ export const Notifications: React.FC = () => {
     const fetchNotifications = async () => {
       const { data } = await supabase
         .from("notifications")
-        .select("*, actor:profile(actor_id, name, profile_pic_url)")
+        .select(`
+          *,
+          actor:profile(actor_id, user_id, name, profile_pic_url),
+          post:posts(id, content)
+        `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(20);
       setNotifications(data ?? []);
       setHasUnread((data ?? []).some(n => n.read === false));
     };
@@ -46,6 +51,50 @@ export const Notifications: React.FC = () => {
     }
   }, [show, userId, hasUnread]);
 
+  // Notification message builder
+  const renderNotification = (n: any) => {
+    if (n.type === "follow" && n.actor) {
+      return (
+        <>
+          <Link
+            to={`/profile/${n.actor.user_id}`}
+            className="font-bold hover:underline text-blue-700"
+          >
+            {n.actor.name || "User"}
+          </Link>{" "}
+          started following you.
+        </>
+      );
+    }
+    if (n.type === "like" && n.actor && n.post) {
+      return (
+        <>
+          <Link
+            to={`/profile/${n.actor.user_id}`}
+            className="font-bold hover:underline text-blue-700"
+          >
+            {n.actor.name || "User"}
+          </Link>{" "}
+          liked your post: <span className="italic">{n.post.content.slice(0, 40)}...</span>
+        </>
+      );
+    }
+    if (n.type === "comment" && n.actor && n.post) {
+      return (
+        <>
+          <Link
+            to={`/profile/${n.actor.user_id}`}
+            className="font-bold hover:underline text-blue-700"
+          >
+            {n.actor.name || "User"}
+          </Link>{" "}
+          commented on your post: <span className="italic">{n.post.content.slice(0, 40)}...</span>
+        </>
+      );
+    }
+    return "Unknown notification";
+  };
+
   return (
     <div className="relative inline-block mr-4">
       <button
@@ -59,7 +108,7 @@ export const Notifications: React.FC = () => {
         )}
       </button>
       {show && (
-        <div className="absolute right-0 mt-2 w-64 bg-white border rounded shadow-lg z-50 p-2">
+        <div className="absolute right-0 mt-2 w-80 bg-white border rounded shadow-lg z-50 p-2">
           <h3 className="font-semibold mb-2">Notifications</h3>
           {notifications.length === 0 ? (
             <div className="text-gray-500">No notifications.</div>
@@ -67,11 +116,7 @@ export const Notifications: React.FC = () => {
             <ul>
               {notifications.map(n => (
                 <li key={n.id} className="mb-2 border-b pb-2 last:border-b-0 last:pb-0">
-                  {n.type === "follow" && n.actor?.name && (
-                    <span>
-                      <span className="font-bold">{n.actor.name}</span> started following you.
-                    </span>
-                  )}
+                  {renderNotification(n)}
                   <span className="block text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</span>
                 </li>
               ))}
