@@ -40,7 +40,7 @@ type Comment = {
 
 type LikeUser = {
   user_id: string;
-  profile: Profile;
+  profile?: Profile;
 };
 
 const BUCKET = "post-images";
@@ -152,13 +152,19 @@ export const NewsFeedPage: React.FC = () => {
     fetchPosts();
   }, [refresh, user]);
 
-  // Likes modal fetch
+  // Likes modal fetch (fix for profile type)
   const showLikesModal = async (postId: string) => {
     const { data } = await supabase
       .from("likes")
       .select("user_id, profile:profile(user_id, name, profile_pic_url)")
       .eq("post_id", postId);
-    setLikesModal({ postId, users: data ?? [] });
+    setLikesModal({
+      postId,
+      users: (data ?? []).map((u: any) => ({
+        user_id: u.user_id,
+        profile: Array.isArray(u.profile) ? u.profile[0] : u.profile
+      })),
+    });
   };
 
   const closeLikesModal = () => setLikesModal({ postId: null, users: [] });
@@ -395,7 +401,7 @@ export const NewsFeedPage: React.FC = () => {
               {likesModal.users.map(u => (
                 <li key={u.user_id} className="mb-2 flex items-center gap-2">
                   {u.profile?.profile_pic_url ? (
-                    <img src={u.profile.profile_pic_url} className="w-6 h-6 rounded-full" alt={u.profile?.name || "User"} />
+                    <img src={u.profile.profile_pic_url} className="w-6 h-6 rounded-full" alt={u.profile.name || "User"} />
                   ) : (
                     <span role="img" aria-label="avatar" className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-base">👤</span>
                   )}
