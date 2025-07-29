@@ -313,23 +313,21 @@ export const NewsFeedPage: React.FC = () => {
 
   return (
     <main className="max-w-md mx-auto p-4 relative">
-      {/* Log Out button in top right corner */}
-      <button
-        onClick={handleLogOut}
-        className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow"
-        style={{ zIndex: 10 }}
-      >
-        Log Out
-      </button>
-
-      {/* Followers Feed link */}
-      <Link
-        to="/followers-feed"
-        className="absolute top-20 right-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow"
-        style={{ zIndex: 10 }}
-      >
-        Followers Feed
-      </Link>
+      {/* Top row: Log Out button & Followers Feed button */}
+      <div className="flex justify-end gap-2 absolute top-4 right-4" style={{ zIndex: 10 }}>
+        <button
+          onClick={handleLogOut}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow"
+        >
+          Log Out
+        </button>
+        <Link
+          to="/followers-feed"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow flex items-center"
+        >
+          Followers Feed
+        </Link>
+      </div>
 
       <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
 
@@ -437,3 +435,4 @@ export const NewsFeedPage: React.FC = () => {
     </main>
   );
 };
+  
