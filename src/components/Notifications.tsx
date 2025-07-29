@@ -19,23 +19,45 @@ export const Notifications: React.FC = () => {
 
   useEffect(() => {
     if (!userId) return;
-    const fetchNotifications = async () => {
-      const { data } = await supabase
+    const fetchNotificationsAndActors = async () => {
+      // 1. Fetch notifications for user
+      const { data: notifications } = await supabase
         .from("notifications")
-        .select(`
-          *,
-          actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
-        `)
+        .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(20);
-      setNotifications(data || []);
+
+      if (!notifications || notifications.length === 0) {
+        setNotifications([]);
+        return;
+      }
+
+      // 2. Fetch profiles for all actor_ids in notifications
+      const actorIds = notifications.map((n: any) => n.actor_id).filter(Boolean);
+      const { data: profiles } = await supabase
+        .from("profile")
+        .select("user_id, name, profile_pic_url")
+        .in("user_id", actorIds);
+
+      // 3. Map actors by user_id
+      const profilesById: Record<string, any> = {};
+      (profiles ?? []).forEach((p: any) => {
+        profilesById[p.user_id] = p;
+      });
+
+      // 4. Attach actor profile to each notification
+      const notificationsWithActors = notifications.map((n: any) => ({
+        ...n,
+        actor: profilesById[n.actor_id] || { user_id: n.actor_id, name: n.actor_id }
+      }));
+
+      setNotifications(notificationsWithActors);
     };
-    fetchNotifications();
+    fetchNotificationsAndActors();
   }, [userId]);
 
   const renderNotificationMessage = (n: any) => {
-    // Use actor.name if present, otherwise fallback to actor.user_id
     const actorName = n.actor?.name?.trim() ? n.actor.name : n.actor?.user_id || n.actor_id;
     return (
       <>
