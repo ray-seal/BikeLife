@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
