@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-
+import type { User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
 import { Post } from "../components/Post"; // Adjust path as needed!
 import { supabase } from "../supabaseClient";
