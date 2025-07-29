@@ -3,9 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
-const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
-const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const CreateProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
