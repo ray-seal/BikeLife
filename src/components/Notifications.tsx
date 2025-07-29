@@ -17,7 +17,6 @@ export const Notifications: React.FC = () => {
     });
   }, []);
 
-  // Fetch notifications and set unread flag
   useEffect(() => {
     if (!userId) return;
     const fetchNotifications = async () => {
@@ -33,7 +32,6 @@ export const Notifications: React.FC = () => {
     fetchNotifications();
   }, [userId, show]);
 
-  // Mark notifications as read when dropdown is opened
   useEffect(() => {
     if (show && userId && hasUnread) {
       const markRead = async () => {
