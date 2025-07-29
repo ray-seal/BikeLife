@@ -20,7 +20,7 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (!userId) return;
     const fetchNotifications = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("notifications")
         .select(`
           *,
@@ -29,7 +29,6 @@ export const Notifications: React.FC = () => {
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(20);
-
       setNotifications(data || []);
     };
     fetchNotifications();
