@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
+import { Post } from "../components/Post"; // Adjust path as needed!
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
@@ -16,7 +17,7 @@ type Profile = {
   location?: string;
 };
 
-type Post = {
+type PostType = {
   id: string;
   user_id: string;
   content: string;
@@ -27,6 +28,7 @@ type Post = {
   comment_count?: number;
   comments_list?: Comment[];
   liked_by_user?: boolean;
+  likes_list?: Like[];
 };
 
 type Comment = {
@@ -38,8 +40,10 @@ type Comment = {
   profile?: Profile;
 };
 
-type LikeUser = {
+type Like = {
+  id: string;
   user_id: string;
+  post_id: string;
   profile?: Profile;
 };
 
@@ -48,7 +52,7 @@ const BUCKET = "post-images";
 export const NewsFeedPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -67,8 +71,8 @@ export const NewsFeedPage: React.FC = () => {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
-  // Likes modal
-  const [likesModal, setLikesModal] = useState<{ postId: string | null, users: LikeUser[] }>({ postId: null, users: [] });
+  // Notifications
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   // Fetch user on mount (only once!)
   useEffect(() => {
@@ -76,6 +80,24 @@ export const NewsFeedPage: React.FC = () => {
       setUser(data.user ?? null);
     });
   }, []);
+
+  // Fetch unread notifications for red dot
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!user) {
+        setHasUnreadNotifications(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("read", false)
+        .limit(1);
+      setHasUnreadNotifications((data ?? []).length > 0);
+    };
+    fetchNotifications();
+  }, [user, refresh]);
 
   // Redirect to /create-profile if user is logged in but has no profile
   useEffect(() => {
@@ -87,6 +109,7 @@ export const NewsFeedPage: React.FC = () => {
         .select("*")
         .eq("user_id", user.id)
         .single();
+      // Redirect if "no rows" or status 406 (no profile)
       if (
         (!data && error && error.message && error.message.toLowerCase().includes("no rows")) ||
         status === 406
@@ -114,6 +137,7 @@ export const NewsFeedPage: React.FC = () => {
             *,
             profile:profile(user_id,name,profile_pic_url),
             likes(count),
+            likes_list:likes(id,user_id,post_id,profile:profile(user_id,name,profile_pic_url)),
             comments(count),
             comments_list:comments(
               id, user_id, post_id, content, created_at,
@@ -151,23 +175,6 @@ export const NewsFeedPage: React.FC = () => {
     };
     fetchPosts();
   }, [refresh, user]);
-
-  // Likes modal fetch (fix for profile type)
-  const showLikesModal = async (postId: string) => {
-    const { data } = await supabase
-      .from("likes")
-      .select("user_id, profile:profile(user_id, name, profile_pic_url)")
-      .eq("post_id", postId);
-    setLikesModal({
-      postId,
-      users: (data ?? []).map((u: any) => ({
-        user_id: u.user_id,
-        profile: Array.isArray(u.profile) ? u.profile[0] : u.profile
-      })),
-    });
-  };
-
-  const closeLikesModal = () => setLikesModal({ postId: null, users: [] });
 
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
@@ -316,30 +323,59 @@ export const NewsFeedPage: React.FC = () => {
         Log Out
       </button>
 
-      {/* Profile avatar at top left, clickable */}
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          left: 16,
-          zIndex: 10,
-          cursor: "pointer"
-        }}
-        title="View my profile"
+      {/* Go to Profile button at top left */}
+      <button
         onClick={() => navigate("/create-profile")}
+        className="absolute top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        style={{ zIndex: 10 }}
       >
+        Go to Profile
+      </button>
+
+      {/* Followers Feed link */}
+      <Link
+        to="/followers-feed"
+        className="absolute top-20 right-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow"
+        style={{ zIndex: 10 }}
+      >
+        Followers Feed
+      </Link>
+
+      {/* Profile pic or placeholder avatar below "Go to Profile" button */}
+      <div style={{ position: "relative", display: "inline-block" }}>
         {profile && profile.profile_pic_url ? (
           <img
             src={profile.profile_pic_url}
-            className="w-10 h-10 rounded-full border-2 border-blue-500"
+            className="w-10 h-10 rounded-full cursor-pointer absolute top-20 left-4 border-2 border-blue-500"
             alt="My profile"
+            title="View my profile"
+            onClick={() => navigate("/create-profile")}
           />
         ) : (
           <div
-            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center border-2 border-blue-500"
+            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center absolute top-20 left-4 cursor-pointer border-2 border-blue-500"
+            title="View my profile"
+            onClick={() => navigate("/create-profile")}
           >
             <span role="img" aria-label="avatar" className="text-2xl">👤</span>
           </div>
+        )}
+        {hasUnreadNotifications && (
+          <span
+            style={{
+              position: "absolute",
+              top: 76,
+              left: 40,
+              zIndex: 20,
+              width: 12,
+              height: 12,
+              backgroundColor: "red",
+              borderRadius: "50%",
+              border: "2px solid white",
+              boxShadow: "0 0 2px #333",
+              display: "block",
+            }}
+          />
         )}
       </div>
 
@@ -355,11 +391,6 @@ export const NewsFeedPage: React.FC = () => {
             onChange={e => setContent(e.target.value)}
             disabled={uploading}
             required
-            style={{
-              outline: "none",
-              boxShadow: "none",
-              borderColor: "#ccc"
-            }}
           />
           <input
             type="file"
@@ -383,37 +414,6 @@ export const NewsFeedPage: React.FC = () => {
 
       {error && <div className="text-red-500 mb-2">{error}</div>}
 
-      {/* Likes Modal */}
-      {likesModal.postId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded p-4 w-80">
-            <h4 className="font-bold mb-2">Liked by</h4>
-            <ul>
-              {likesModal.users.map(u => (
-                <li key={u.user_id} className="mb-2 flex items-center gap-2">
-                  {u.profile?.profile_pic_url ? (
-                    <img src={u.profile.profile_pic_url} className="w-6 h-6 rounded-full" alt={u.profile.name || "User"} />
-                  ) : (
-                    <span role="img" aria-label="avatar" className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-base">👤</span>
-                  )}
-                  <Link
-                    to={`/profile/${u.user_id}`}
-                    className="font-semibold hover:underline text-blue-700"
-                    onClick={closeLikesModal}
-                  >
-                    {u.profile?.name || "User"}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <button
-              className="mt-2 px-4 py-2 bg-gray-300 rounded"
-              onClick={closeLikesModal}
-            >Close</button>
-          </div>
-        </div>
-      )}
-
       {loading ? (
         <div>Loading...</div>
       ) : posts.length === 0 ? (
@@ -421,185 +421,25 @@ export const NewsFeedPage: React.FC = () => {
       ) : (
         <ul className="space-y-6">
           {posts.map((post) => (
-            <li
+            <Post
               key={post.id}
-              className="border rounded p-3 bg-white shadow"
-            >
-              <div className="flex items-center mb-2">
-                {post.profile?.profile_pic_url ? (
-                  <img
-                    src={post.profile.profile_pic_url}
-                    className="w-8 h-8 rounded-full mr-2 cursor-pointer"
-                    alt={post.profile.name || "user"}
-                    title="View user's profile"
-                    onClick={() => navigate(`/profile/${post.user_id}`)}
-                  />
-                ) : (
-                  <div
-                    className="w-8 h-8 rounded-full bg-gray-300 mr-2 flex items-center justify-center cursor-pointer"
-                    title="View user's profile"
-                    onClick={() => navigate(`/profile/${post.user_id}`)}
-                  >
-                    <span role="img" aria-label="avatar" className="text-lg">👤</span>
-                  </div>
-                )}
-                <Link
-                  to={`/profile/${post.user_id}`}
-                  className="font-bold hover:underline text-black"
-                >
-                  {post.profile?.name || "User"}
-                </Link>
-                <span className="ml-auto text-xs text-gray-500">
-                  {new Date(post.created_at).toLocaleString("en-GB")}
-                </span>
-              </div>
-              <div className="mb-2 whitespace-pre-line break-words text-black">
-                {editingPostId === post.id ? (
-                  <form onSubmit={handleEditSubmit}>
-                    <textarea
-                      value={editContent}
-                      onChange={e => setEditContent(e.target.value)}
-                      className="border rounded w-full p-1 mb-2 text-black"
-                      rows={2}
-                      required
-                      style={{
-                        outline: "none",
-                        boxShadow: "none",
-                        borderColor: "#ccc"
-                      }}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        className="bg-gray-400 hover:bg-gray-500 text-white px-2 py-1 rounded"
-                        onClick={() => setEditingPostId(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <>
-                    {post.content}
-                    {post.image_url && (
-                      <img
-                        src={post.image_url}
-                        alt="user upload"
-                        className="mt-2 rounded max-h-64 object-contain w-full"
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="flex gap-4 items-center text-sm">
-                <button
-                  onClick={() => handleLike(post.id, !!post.liked_by_user)}
-                  className={`px-2 py-1 rounded ${
-                    post.liked_by_user
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                >
-                  👍
-                </button>
-                <button
-                  onClick={() => showLikesModal(post.id)}
-                  className="px-2 py-1 rounded bg-gray-200 text-gray-700"
-                  title="Show who liked this"
-                >
-                  {post.like_count || 0}
-                </button>
-                <button
-                  onClick={() => toggleShowComments(post.id)}
-                  className="px-2 py-1 rounded bg-gray-200 text-gray-700"
-                >
-                  💬 {post.comment_count || 0}
-                </button>
-                {user && post.user_id === user.id && editingPostId !== post.id && (
-                  <>
-                    <button
-                      onClick={() => handleEdit(post.id, post.content)}
-                      className="px-2 py-1 rounded bg-yellow-400 hover:bg-yellow-500 text-black"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="px-2 py-1 rounded bg-red-400 hover:bg-red-500 text-white"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-              {showComments[post.id] && (
-                <div className="mt-2 border-t pt-2">
-                  <ul>
-                    {post.comments_list?.map((comment) => (
-                      <li key={comment.id} className="mb-2">
-                        <div className="flex items-center">
-                          {comment.profile?.profile_pic_url ? (
-                            <img
-                              src={comment.profile.profile_pic_url}
-                              className="w-6 h-6 rounded-full mr-2"
-                              alt={comment.profile.name || "comment user"}
-                            />
-                          ) : (
-                            <div
-                              className="w-6 h-6 rounded-full bg-gray-300 mr-2 flex items-center justify-center"
-                            >
-                              <span role="img" aria-label="avatar" className="text-base">👤</span>
-                            </div>
-                          )}
-                          <Link
-                            to={`/profile/${comment.profile?.user_id}`}
-                            className="font-semibold text-sm hover:underline text-blue-700"
-                          >
-                            {comment.profile?.name || "User"}
-                          </Link>
-                          <span className="ml-2 text-xs text-gray-500">
-                            {new Date(comment.created_at).toLocaleString("en-GB")}
-                          </span>
-                        </div>
-                        <div className="ml-8 text-sm text-black">{comment.content}</div>
-                      </li>
-                    ))}
-                  </ul>
-                  <form
-                    className="flex gap-2 mt-2"
-                    onSubmit={e => handleAddComment(e, post.id)}
-                  >
-                    <input
-                      type="text"
-                      className="border rounded flex-1 p-1 text-black"
-                      placeholder="Add a comment..."
-                      value={commentInputs[post.id] || ""}
-                      onChange={e => handleCommentInput(post.id, e.target.value)}
-                      disabled={submittingComment[post.id]}
-                      required
-                      style={{
-                        outline: "none",
-                        boxShadow: "none",
-                        borderColor: "#ccc"
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
-                      disabled={submittingComment[post.id]}
-                    >
-                      {submittingComment[post.id] ? "..." : "Post"}
-                    </button>
-                  </form>
-                </div>
-              )}
-            </li>
+              post={post}
+              user={user}
+              onLike={handleLike}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+              onEditSubmit={handleEditSubmit}
+              editingPostId={editingPostId}
+              editContent={editContent}
+              setEditContent={setEditContent}
+              showComments={showComments[post.id]}
+              toggleShowComments={toggleShowComments}
+              commentsList={post.comments_list}
+              commentInput={commentInputs[post.id] || ""}
+              handleCommentInput={handleCommentInput}
+              handleAddComment={handleAddComment}
+              submittingComment={submittingComment[post.id]}
+            />
           ))}
         </ul>
       )}
