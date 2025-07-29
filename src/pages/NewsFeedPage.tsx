@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
-import { Post } from "../components/Post"; // Adjust path as needed!
+import { Post } from "../components/Post";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
@@ -74,14 +74,12 @@ export const NewsFeedPage: React.FC = () => {
   // Notifications
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
-  // Fetch user on mount (only once!)
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null);
     });
   }, []);
 
-  // Fetch unread notifications for red dot
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!user) {
@@ -99,7 +97,6 @@ export const NewsFeedPage: React.FC = () => {
     fetchNotifications();
   }, [user, refresh]);
 
-  // Redirect to /create-profile if user is logged in but has no profile
   useEffect(() => {
     if (!user) return;
     if (window.location.pathname === "/create-profile") return;
@@ -123,7 +120,6 @@ export const NewsFeedPage: React.FC = () => {
     fetchProfile();
   }, [user, navigate]);
 
-  // Fetch posts (use user, but don't update user here!)
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
@@ -210,6 +206,7 @@ export const NewsFeedPage: React.FC = () => {
           user_id: user.id,
           content,
           image_url,
+          created_at: new Date().toISOString(),
         },
       ]);
       if (insertError) throw insertError;
@@ -218,7 +215,11 @@ export const NewsFeedPage: React.FC = () => {
       setRefresh((r) => r + 1);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err: any) {
-      setError(err.message || "Failed to create post.");
+      if (err.code === "42501" || err.message?.toLowerCase().includes("row-level security")) {
+        setError("You do not have permission to create this post. Please make sure your profile is linked and you are logged in.");
+      } else {
+        setError(err.message || "Failed to create post.");
+      }
     } finally {
       setUploading(false);
     }
@@ -292,6 +293,7 @@ export const NewsFeedPage: React.FC = () => {
           post_id: postId,
           user_id: user.id,
           content: commentInputs[postId].trim(),
+          created_at: new Date().toISOString(),
         },
       ]);
       if (insertError) throw insertError;
@@ -333,7 +335,6 @@ export const NewsFeedPage: React.FC = () => {
 
       {user && (
         <form className="mb-6 flex gap-3" onSubmit={handleSubmit}>
-          {/* LEFT: Profile pic/avatar, clickable */}
           <div style={{ position: "relative" }}>
             {profile && profile.profile_pic_url ? (
               <img
@@ -370,7 +371,6 @@ export const NewsFeedPage: React.FC = () => {
               />
             )}
           </div>
-          {/* RIGHT: textarea, file input, and submit button stacked vertically */}
           <div className="flex-1 flex flex-col gap-2">
             <textarea
               className="w-full border rounded p-2 text-black"
@@ -435,4 +435,3 @@ export const NewsFeedPage: React.FC = () => {
     </main>
   );
 };
-  
