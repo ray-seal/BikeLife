@@ -13,9 +13,11 @@ export const UserProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [followersCount, setFollowersCount] = useState<number>(0);
+  const [followingCount, setFollowingCount] = useState<number>(0);
+  const [isFollowing, setIsFollowing] = useState<boolean>(false);
 
   useEffect(() => {
-    // Get current user for follow logic
     supabase.auth.getUser().then(({ data }) => {
       setCurrentUserId(data.user?.id ?? null);
     });
@@ -41,12 +43,67 @@ export const UserProfilePage: React.FC = () => {
     fetchProfile();
   }, [user_id]);
 
-  // Placeholder follow handler (to be implemented)
+  useEffect(() => {
+    if (!user_id) return;
+    // Get followers and following counts
+    const fetchCounts = async () => {
+      const { count: followers } = await supabase
+        .from("followers")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", user_id);
+      setFollowersCount(followers ?? 0);
+
+      const { count: following } = await supabase
+        .from("followers")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", user_id);
+      setFollowingCount(following ?? 0);
+    };
+    fetchCounts();
+  }, [user_id, isFollowing]);
+
+  useEffect(() => {
+    if (!currentUserId || !user_id || currentUserId === user_id) return;
+    // Check if current user is following this profile
+    const checkFollowing = async () => {
+      const { data } = await supabase
+        .from("followers")
+        .select("id")
+        .eq("follower_id", currentUserId)
+        .eq("following_id", user_id)
+        .single();
+      setIsFollowing(!!data);
+    };
+    checkFollowing();
+  }, [currentUserId, user_id]);
+
   const handleFollow = async () => {
-    // Add logic for following here (e.g. insert into followers table)
-    alert("Follow user functionality coming soon!");
-    // Example:
-    // await supabase.from("followers").insert({ follower_id: currentUserId, following_id: user_id });
+    if (!currentUserId || !user_id || currentUserId === user_id) return;
+    // Add follower
+    const { error } = await supabase
+      .from("followers")
+      .insert([{ follower_id: currentUserId, following_id: user_id }]);
+    if (!error) {
+      setIsFollowing(true);
+      // Insert notification for followed user
+      await supabase
+        .from("notifications")
+        .insert([{
+          user_id: user_id,
+          actor_id: currentUserId,
+          type: "follow"
+        }]);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    if (!currentUserId || !user_id || currentUserId === user_id) return;
+    await supabase
+      .from("followers")
+      .delete()
+      .eq("follower_id", currentUserId)
+      .eq("following_id", user_id);
+    setIsFollowing(false);
   };
 
   if (loading) return <main>Loading...</main>;
@@ -60,27 +117,44 @@ export const UserProfilePage: React.FC = () => {
       >
         ← Back to News Feed
       </button>
-      <h2 className="text-xl mb-4 text-center">{profile.name}'s Profile</h2>
+      <h2 className="text-xl mb-2 text-center">{profile.name}'s Profile</h2>
+      <div className="flex justify-center gap-4 mb-4">
+        <div>
+          <span className="font-semibold">Followers:</span> {followersCount}
+        </div>
+        <div>
+          <span className="font-semibold">Following:</span> {followingCount}
+        </div>
+      </div>
       {profile.profile_pic_url ? (
         <img
           src={profile.profile_pic_url}
           alt="Profile"
-          className="rounded-full border mb-4"
+          className="rounded-full border mb-4 mx-auto block"
           style={{ width: 120, height: 120, objectFit: "cover" }}
         />
       ) : (
-        <div className="w-28 h-28 rounded-full bg-gray-200 mb-4 flex items-center justify-center text-5xl">
+        <div className="w-28 h-28 rounded-full bg-gray-200 mb-4 flex items-center justify-center text-5xl mx-auto">
           <span role="img" aria-label="avatar">👤</span>
         </div>
       )}
-      {/* Show follow button unless viewing own profile */}
+      {/* Show follow/unfollow button unless viewing own profile */}
       {currentUserId && user_id !== currentUserId && (
-        <button
-          className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={handleFollow}
-        >
-          Follow
-        </button>
+        isFollowing ? (
+          <button
+            className="mb-4 px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+            onClick={handleUnfollow}
+          >
+            Unfollow
+          </button>
+        ) : (
+          <button
+            className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={handleFollow}
+          >
+            Follow
+          </button>
+        )
       )}
       <div className="mb-2"><span className="font-semibold">Dream Bike:</span> {profile.dream_bike}</div>
       <div className="mb-2"><span className="font-semibold">Current Bike:</span> {profile.current_bike}</div>
