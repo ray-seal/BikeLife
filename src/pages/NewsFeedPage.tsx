@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
 
-// Initialize Supabase client
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -101,7 +100,6 @@ export const NewsFeedPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Use user from state, do not call setUser here
       let query = supabase
         .from("posts")
         .select(
@@ -126,7 +124,6 @@ export const NewsFeedPage: React.FC = () => {
         return;
       }
 
-      // Fetch likes for current user to mark liked posts
       let likedPosts: string[] = [];
       if (user) {
         const { data: userLikes } = await supabase
@@ -295,14 +292,32 @@ export const NewsFeedPage: React.FC = () => {
         Log Out
       </button>
 
-      {profile && profile.profile_pic_url && (
+      {/* Go to Profile button at top left */}
+      <button
+        onClick={() => navigate("/create-profile")}
+        className="absolute top-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
+        style={{ zIndex: 10 }}
+      >
+        Go to Profile
+      </button>
+
+      {/* Profile pic or placeholder avatar below "Go to Profile" button */}
+      {profile && profile.profile_pic_url ? (
         <img
           src={profile.profile_pic_url}
-          className="w-10 h-10 rounded-full cursor-pointer absolute top-4 left-4 border-2 border-blue-500"
+          className="w-10 h-10 rounded-full cursor-pointer absolute top-20 left-4 border-2 border-blue-500"
           alt="My profile"
           title="View my profile"
           onClick={() => navigate("/create-profile")}
         />
+      ) : (
+        <div
+          className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center absolute top-20 left-4 cursor-pointer border-2 border-blue-500"
+          title="View my profile"
+          onClick={() => navigate("/create-profile")}
+        >
+          <span role="img" aria-label="avatar" className="text-2xl">👤</span>
+        </div>
       )}
 
       <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
@@ -361,7 +376,13 @@ export const NewsFeedPage: React.FC = () => {
                     onClick={() => navigate(`/profile/${post.user_id}`)}
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-300 mr-2" />
+                  <div
+                    className="w-8 h-8 rounded-full bg-gray-300 mr-2 flex items-center justify-center cursor-pointer"
+                    title="View user's profile"
+                    onClick={() => navigate(`/profile/${post.user_id}`)}
+                  >
+                    <span role="img" aria-label="avatar" className="text-lg">👤</span>
+                  </div>
                 )}
                 <Link
                   to={`/profile/${post.user_id}`}
@@ -459,7 +480,11 @@ export const NewsFeedPage: React.FC = () => {
                               alt={comment.profile.name || "comment user"}
                             />
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-gray-300 mr-2" />
+                            <div
+                              className="w-6 h-6 rounded-full bg-gray-300 mr-2 flex items-center justify-center"
+                            >
+                              <span role="img" aria-label="avatar" className="text-base">👤</span>
+                            </div>
                           )}
                           <span className="font-semibold text-sm text-black">
                             {comment.profile?.name || "User"}
