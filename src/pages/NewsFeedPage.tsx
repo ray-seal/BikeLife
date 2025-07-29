@@ -334,9 +334,9 @@ export const NewsFeedPage: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
 
       {user && (
-        <form className="mb-6 flex items-start gap-2" onSubmit={handleSubmit}>
-          {/* Profile pic/avatar, clickable, left of textarea */}
-          <div style={{ position: "relative", display: "inline-block" }}>
+        <form className="mb-6 flex gap-3" onSubmit={handleSubmit}>
+          {/* LEFT: Profile pic/avatar, clickable */}
+          <div style={{ position: "relative" }}>
             {profile && profile.profile_pic_url ? (
               <img
                 src={profile.profile_pic_url}
@@ -344,14 +344,12 @@ export const NewsFeedPage: React.FC = () => {
                 alt="My profile"
                 title="View my profile"
                 onClick={() => navigate("/create-profile")}
-                style={{ marginTop: 2 }}
               />
             ) : (
               <div
                 className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer border-2 border-blue-500"
                 title="View my profile"
                 onClick={() => navigate("/create-profile")}
-                style={{ marginTop: 2 }}
               >
                 <span role="img" aria-label="avatar" className="text-2xl">👤</span>
               </div>
@@ -374,33 +372,33 @@ export const NewsFeedPage: React.FC = () => {
               />
             )}
           </div>
-          {/* Textarea */}
-          <textarea
-            className="w-full border rounded p-2 mb-2 text-black"
-            rows={2}
-            placeholder="What you revvin' about today?"
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            disabled={uploading}
-            required
-          />
-          {/* You may want to move the file input outside the flex if it looks odd. */}
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={e => setImageFile(e.target.files?.[0] ?? null)}
-            className="mb-2"
-            disabled={uploading}
-          />
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          {/* RIGHT: textarea, file input, and submit button stacked vertically */}
+          <div className="flex-1 flex flex-col gap-2">
+            <textarea
+              className="w-full border rounded p-2 text-black"
+              rows={2}
+              placeholder="What you revvin' about today?"
+              value={content}
+              onChange={e => setContent(e.target.value)}
               disabled={uploading}
-            >
-              {uploading ? "Posting..." : "Post"}
-            </button>
+              required
+            />
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={e => setImageFile(e.target.files?.[0] ?? null)}
+              disabled={uploading}
+            />
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                disabled={uploading}
+              >
+                {uploading ? "Posting..." : "Post"}
+              </button>
+            </div>
           </div>
         </form>
       )}
