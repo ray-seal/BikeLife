@@ -14,6 +14,7 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
+      console.log("Notifications: userId", data.user?.id);
     });
   }, []);
 
@@ -32,6 +33,7 @@ export const Notifications: React.FC = () => {
       if (error) {
         console.error("Supabase notifications fetch error", error);
       }
+      console.log("Fetched notifications", data);
       setNotifications(data || []);
     };
     fetchNotifications();
@@ -78,7 +80,18 @@ export const Notifications: React.FC = () => {
         </>
       );
     }
-    return null;
+    return (
+      <>
+        Notification from{" "}
+        <Link
+          to={`/profile/${n.actor.user_id}`}
+          className="font-bold hover:underline text-blue-700"
+        >
+          {n.actor.name || "User"}
+        </Link>
+        .
+      </>
+    );
   };
 
   return (
