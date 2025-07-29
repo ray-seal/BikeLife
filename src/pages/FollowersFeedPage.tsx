@@ -3,9 +3,6 @@ import { createClient, User } from "@supabase/supabase-js";
 import { Post } from "../components/Post"; // Adjust path as needed
 import { supabase } from "../supabaseClient";
 
-const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
-const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const FollowersFeedPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
