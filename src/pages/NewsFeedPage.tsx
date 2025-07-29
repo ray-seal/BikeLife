@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
 import { Post } from "../components/Post"; // Adjust path as needed!
+import { supabase } from "../supabaseClient";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
