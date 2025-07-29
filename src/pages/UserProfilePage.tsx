@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "../supabaseClient";
 
 export const UserProfilePage: React.FC = () => {
