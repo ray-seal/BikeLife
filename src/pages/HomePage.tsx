@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
 // Initialize Supabase client
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
