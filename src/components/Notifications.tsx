@@ -22,7 +22,6 @@ export const Notifications: React.FC = () => {
     const fetchNotifications = async () => {
       const { data, error } = await supabase
         .from("notifications")
-        // This join must use actor_id as the user_id in the profile table
         .select(`
           *,
           actor:profile!notifications_actor_id_fkey(user_id, name, profile_pic_url)
@@ -38,7 +37,6 @@ export const Notifications: React.FC = () => {
     fetchNotifications();
   }, [userId]);
 
-  // Helper to render notification message
   const renderNotificationMessage = (n: any) => {
     if (!n.actor) return null;
     if (n.type === "follow") {
@@ -103,10 +101,18 @@ export const Notifications: React.FC = () => {
           ) : (
             <ul>
               {notifications.map(n => (
-                <li key={n.id} className="mb-2 border-b pb-2 last:border-b-0 last:pb-0">
+                <li
+                  key={n.id}
+                  className={`mb-2 border-b pb-2 last:border-b-0 last:pb-0 ${n.read ? "bg-gray-100" : "bg-white"}`}
+                >
                   {renderNotificationMessage(n)}
                   <span className="block text-xs text-gray-400">
                     {new Date(n.created_at).toLocaleString()}
+                    {!n.read && (
+                      <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-800 rounded-full text-xxs align-middle">
+                        New
+                      </span>
+                    )}
                   </span>
                 </li>
               ))}
