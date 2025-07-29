@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 
 const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
@@ -21,6 +22,8 @@ export const CreateProfilePage: React.FC = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   // Fetch profile on mount
   useEffect(() => {
@@ -82,13 +85,13 @@ export const CreateProfilePage: React.FC = () => {
   const handleCancelEdit = () => {
     setEditMode(false);
     setForm({
-      name: profile.name || "",
-      dreamBike: profile.dream_bike || "",
-      currentBike: profile.current_bike || "",
-      licenceHeld: profile.licence_held || "",
-      location: profile.location || "",
+      name: profile?.name || "",
+      dreamBike: profile?.dream_bike || "",
+      currentBike: profile?.current_bike || "",
+      licenceHeld: profile?.licence_held || "",
+      location: profile?.location || "",
       profilePic: null,
-      profilePicUrl: profile.profile_pic_url || "",
+      profilePicUrl: profile?.profile_pic_url || "",
     });
     setPreview(null);
     setError(null);
@@ -176,6 +179,12 @@ export const CreateProfilePage: React.FC = () => {
   return (
     <main className="p-4 max-w-md mx-auto">
       <h2 className="text-xl mb-4 text-center">Your Profile</h2>
+      <button
+        onClick={() => navigate("/news-feed")}
+        className="mb-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+      >
+        Go to News Feed
+      </button>
       {/* VIEW MODE */}
       {!editMode && profile && (
         <div className="flex flex-col items-center">
