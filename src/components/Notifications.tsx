@@ -51,7 +51,6 @@ export const Notifications: React.FC = () => {
     }
   }, [show, userId, hasUnread]);
 
-  // Notification message builder
   const renderNotification = (n: any) => {
     if (n.type === "follow" && n.actor) {
       return (
