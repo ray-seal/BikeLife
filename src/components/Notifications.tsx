@@ -17,45 +17,58 @@ export const Notifications: React.FC = () => {
     });
   }, []);
 
+  // Fetch notifications and actor profiles
+  const fetchNotificationsAndActors = async () => {
+    const { data: notifications } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (!notifications || notifications.length === 0) {
+      setNotifications([]);
+      return;
+    }
+
+    const actorIds = notifications.map((n: any) => n.actor_id).filter(Boolean);
+    const { data: profiles } = await supabase
+      .from("profile")
+      .select("user_id, name, profile_pic_url")
+      .in("user_id", actorIds);
+
+    const profilesById: Record<string, any> = {};
+    (profiles ?? []).forEach((p: any) => {
+      profilesById[p.user_id] = p;
+    });
+
+    const notificationsWithActors = notifications.map((n: any) => ({
+      ...n,
+      actor: profilesById[n.actor_id] || { user_id: n.actor_id, name: n.actor_id }
+    }));
+
+    setNotifications(notificationsWithActors);
+  };
+
   useEffect(() => {
     if (!userId) return;
-    const fetchNotificationsAndActors = async () => {
-      // 1. Fetch notifications for user
-      const { data: notifications } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (!notifications || notifications.length === 0) {
-        setNotifications([]);
-        return;
-      }
-
-      // 2. Fetch profiles for all actor_ids in notifications
-      const actorIds = notifications.map((n: any) => n.actor_id).filter(Boolean);
-      const { data: profiles } = await supabase
-        .from("profile")
-        .select("user_id, name, profile_pic_url")
-        .in("user_id", actorIds);
-
-      // 3. Map actors by user_id
-      const profilesById: Record<string, any> = {};
-      (profiles ?? []).forEach((p: any) => {
-        profilesById[p.user_id] = p;
-      });
-
-      // 4. Attach actor profile to each notification
-      const notificationsWithActors = notifications.map((n: any) => ({
-        ...n,
-        actor: profilesById[n.actor_id] || { user_id: n.actor_id, name: n.actor_id }
-      }));
-
-      setNotifications(notificationsWithActors);
-    };
     fetchNotificationsAndActors();
+    // eslint-disable-next-line
   }, [userId]);
+
+  // Mark all unread notifications as read when the bell is opened
+  const handleBellClick = async () => {
+    if (!show && userId && notifications.some(n => !n.read)) {
+      await supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("user_id", userId)
+        .eq("read", false);
+      // Optionally, refresh notifications after marking as read
+      fetchNotificationsAndActors();
+    }
+    setShow(!show);
+  };
 
   const renderNotificationMessage = (n: any) => {
     const actorName = n.actor?.name?.trim() ? n.actor.name : n.actor?.user_id || n.actor_id;
@@ -75,7 +88,7 @@ export const Notifications: React.FC = () => {
   return (
     <div className="relative inline-block mr-4">
       <button
-        onClick={() => setShow(!show)}
+        onClick={handleBellClick}
         className="relative"
         aria-label="Notifications"
       >
