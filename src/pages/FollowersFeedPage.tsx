@@ -6,13 +6,28 @@ const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
 const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export const FollowersFeedPage: React.FC<{ user: User }> = ({ user }) => {
+export const FollowersFeedPage: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Get current user on mount
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+    });
+  }, []);
+
+  useEffect(() => {
     const fetchFollowersPosts = async () => {
       setLoading(true);
+
+      if (!user) {
+        setPosts([]);
+        setLoading(false);
+        return;
+      }
+
       // 1. Get list of user_ids that current user follows
       const { data: follows } = await supabase
         .from("follows")
@@ -49,7 +64,7 @@ export const FollowersFeedPage: React.FC<{ user: User }> = ({ user }) => {
       setLoading(false);
     };
 
-    fetchFollowersPosts();
+    if (user) fetchFollowersPosts();
   }, [user]);
 
   // Dummy handlers to satisfy Post props
