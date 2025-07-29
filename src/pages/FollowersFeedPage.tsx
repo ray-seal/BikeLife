@@ -57,7 +57,6 @@ export const FollowersFeedPage: React.FC<{ user: User }> = ({ user }) => {
   const noopForm = (e: React.FormEvent) => { e.preventDefault(); };
   const noopStr = (_: string) => {};
   const noopStrStr = (_1: string, _2: string) => {};
-  const noopStrStr2 = (_1: string, _2: string) => {};
   const noopFormStr = (e: React.FormEvent, _postId: string) => { e.preventDefault(); };
 
   return (
