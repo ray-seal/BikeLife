@@ -3,10 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "../supabaseClient";
 
-const supabaseUrl = "https://mhovvdebtpinmcqhyahw.supabase.co/";
-const supabaseKey = "sb_publishable_O486ikcK_pFTdxn-Bf0fFw_95fcL_sP";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 export const UserProfilePage: React.FC = () => {
   const { user_id } = useParams();
   const navigate = useNavigate();
