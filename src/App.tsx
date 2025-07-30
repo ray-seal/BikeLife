@@ -8,7 +8,7 @@ import { UserProfilePage } from "./pages/UserProfilePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { Notifications } from "./components/Notifications";
 import { FollowersFeedPage } from "./pages/FollowersFeedPage";
-import DeleteAccount from "./pages/DeleteAccount";
+import DeleteAccount from "./pages/DeleteAccount"; // <-- ADD THIS IMPORT
 
 function App() {
   return (
@@ -23,8 +23,9 @@ function App() {
         <Route path="/auth/callback" element={<CallbackPage />} />
         <Route path="/create-profile" element={<CreateProfilePage />} />
         <Route path="/news-feed" element={<NewsFeedPage />} />
-        <Route path="/followers-feed" element={<FollowersFeedPage />} /> {/* <-- ADD THIS ROUTE */}
+        <Route path="/followers-feed" element={<FollowersFeedPage />} />
         <Route path="/profile/:user_id" element={<UserProfilePage />} />
+        <Route path="/delete-account" element={<DeleteAccount />} /> {/* <-- ADD THIS ROUTE */}
         <Route
           path="/test"
           element={<div style={{ padding: 32, fontSize: 24 }}>Test Route Works</div>}
