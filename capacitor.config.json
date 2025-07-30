@@ -1,0 +1,6 @@
+{
+  "appId": "com.yourname.bikelife",
+  "appName": "BikeLife",
+  "webDir": "build",
+  "bundledWebRuntime": false
+}
