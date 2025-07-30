@@ -7,7 +7,8 @@ import { NewsFeedPage } from "./pages/NewsFeedPage";
 import { UserProfilePage } from "./pages/UserProfilePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { Notifications } from "./components/Notifications";
-import { FollowersFeedPage } from "./pages/FollowersFeedPage"; // <-- ADD THIS IMPORT
+import { FollowersFeedPage } from "./pages/FollowersFeedPage";
+import DeleteAccount from "./pages/DeleteAccount";
 
 function App() {
   return (
