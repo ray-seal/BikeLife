@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const EMAIL_TO_NOTIFY = "bike-life1@outlook.com";
 const SUBJECT = encodeURIComponent("delete my account on RideNet");
@@ -72,6 +72,14 @@ export default function DeleteAccount() {
       <p style={{ marginTop: "2rem", color: "#666" }}>
         This link will open your email client with the subject <b>"delete my account on RideNet"</b> pre-filled, and send to <b>{EMAIL_TO_NOTIFY}</b>.
       </p>
+      <div className="mt-8 text-center">
+        <a
+          href="/delete-account"
+          className="text-red-600 underline hover:text-red-800"
+        >
+          Delete Account
+        </a>
+      </div>
     </div>
   );
 }
