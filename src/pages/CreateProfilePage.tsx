@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
-
 export const CreateProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -319,6 +318,14 @@ export const CreateProfilePage: React.FC = () => {
           {success && <div className="text-green-600">{success}</div>}
         </form>
       )}
+      <div className="mt-8 text-center">
+        <a
+          href="/delete-account"
+          className="text-red-600 underline hover:text-red-800"
+        >
+          Delete Account
+        </a>
+      </div>
     </main>
   );
 };
