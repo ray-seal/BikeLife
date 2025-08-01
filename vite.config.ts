@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Bike Life',
-        short_name: 'BikeLife',
+        name: 'Ride Net',
+        short_name: 'RideNet',
         description: '',
         theme_color: '#121212',
         background_color: '#000000',
