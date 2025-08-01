@@ -327,8 +327,6 @@ export const NewsFeedPage: React.FC = () => {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold mb-4 text-center text-black">News Feed</h1>
-
       {user && (
         <form className="mb-6 flex gap-3" onSubmit={handleSubmit}>
           {/* LEFT: Profile pic/avatar, clickable */}
