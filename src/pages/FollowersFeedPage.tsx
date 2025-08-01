@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
+import { Link } from "react-router-dom";
 import { Post } from "../components/Post"; // Adjust path as needed
 import { supabase } from "../supabaseClient";
-
 
 export const FollowersFeedPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -74,6 +74,12 @@ export const FollowersFeedPage: React.FC = () => {
 
   return (
     <main className="max-w-md mx-auto p-4">
+      {/* News Feed link */}
+      <div className="mb-4 text-center">
+        <Link to="/news-feed" className="text-blue-600 underline">
+          ← Back to News Feed
+        </Link>
+      </div>
       <h1 className="text-2xl font-bold mb-4 text-center text-black">Followers Feed</h1>
       {loading ? (
         <div>Loading...</div>
