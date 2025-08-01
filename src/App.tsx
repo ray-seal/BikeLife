@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
-import { AuthPage } from "./pages/AuthPage";
-import { CallbackPage } from "./pages/CallbackPage";
+import AuthPage from "./pages/AuthPage";
+import CallbackPage from "./pages/CallbackPage";
 import { CreateProfilePage } from "./pages/CreateProfilePage";
 import { NewsFeedPage } from "./pages/NewsFeedPage";
 import { UserProfilePage } from "./pages/UserProfilePage";
