@@ -326,6 +326,7 @@ export const NewsFeedPage: React.FC = () => {
           Followers Feed
         </Link>
       </div>
+      <br></br>
 
       {user && (
         <form className="mb-6 flex gap-3" onSubmit={handleSubmit}>
