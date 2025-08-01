@@ -77,7 +77,7 @@ export const HomePage: React.FC = () => {
 
   return (
     <main className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl mb-4">BikeLife</h1>
+      <h1 className="text-2xl mb-4">RideNet</h1>
       {view === "user" && user ? (
         <div>
           <p className="mb-2">Logged in as: <b>{user.email}</b></p>
