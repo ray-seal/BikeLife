@@ -6,6 +6,7 @@ import { supabase } from "../supabaseClient"; // Use your shared client instance
 
 type Profile = {
   user_id: string;
+  age: string;
   name: string;
   profile_pic_url?: string;
   dream_bike?: string;
@@ -70,6 +71,9 @@ export const NewsFeedPage: React.FC = () => {
 
   // Notifications
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  // Search
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch user on mount (only once!)
   useEffect(() => {
@@ -309,6 +313,15 @@ export const NewsFeedPage: React.FC = () => {
     navigate("/");
   };
 
+  // Filter posts by search term (content or username/profile.name)
+  const filteredPosts = posts.filter((post) => {
+    const search = searchTerm.trim().toLowerCase();
+    if (!search) return true;
+    const contentMatch = post.content?.toLowerCase().includes(search);
+    const nameMatch = post.profile?.name?.toLowerCase().includes(search);
+    return contentMatch || nameMatch;
+  });
+
   return (
     <main className="max-w-md mx-auto p-4 relative">
       {/* Top row: Log Out button & Followers Feed button */}
@@ -327,6 +340,17 @@ export const NewsFeedPage: React.FC = () => {
         </Link>
       </div>
       <br /><br /><br /><br />
+
+      {/* SEARCH BAR */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by word or username"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full border rounded p-2"
+        />
+      </div>
 
       {user && (
         <form className="mb-6 flex gap-3" onSubmit={handleSubmit}>
@@ -402,11 +426,11 @@ export const NewsFeedPage: React.FC = () => {
 
       {loading ? (
         <div>Loading...</div>
-      ) : posts.length === 0 ? (
-        <div>No posts yet.</div>
+      ) : filteredPosts.length === 0 ? (
+        <div>No posts found.</div>
       ) : (
         <ul className="space-y-6">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <Post
               key={post.id}
               post={post}
