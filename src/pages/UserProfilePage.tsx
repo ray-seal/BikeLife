@@ -161,6 +161,7 @@ export const UserProfilePage: React.FC = () => {
           )}
         </div>
       )}
+      <div className="mb-2"><span className="font-semibold">Age:</span> {profile.age}</div>
       <div className="mb-2"><span className="font-semibold">Dream Bike:</span> {profile.dream_bike}</div>
       <div className="mb-2"><span className="font-semibold">Current Bike:</span> {profile.current_bike}</div>
       <div className="mb-2"><span className="font-semibold">Licence Held:</span> {profile.licence_held}</div>
