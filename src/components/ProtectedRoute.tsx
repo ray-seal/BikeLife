@@ -1,13 +1,12 @@
-// src/components/ProtectedRoute.tsx
 import React from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthProvider'
 
-export const ProtectedRoute: React.FC => {
+export const ProtectedRoute: React.FC = () => {
   const { session } = useAuth()
   const location = useLocation()
 
-  if (session === undefined {
+  if (session === undefined) {
     return (
       <div className="p-4 text-center text-muted">
         <span className="animate-pulse">Checking session...</span>
@@ -22,4 +21,3 @@ export const ProtectedRoute: React.FC => {
 
   return <Outlet context={{ session }} />
 }
-
