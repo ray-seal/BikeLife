@@ -348,7 +348,7 @@ export const NewsFeedPage: React.FC = () => {
           placeholder="Search by word or username"
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full border rounded p-2"
+          className="w-full border rounded p-2 text-black"
         />
       </div>
 
